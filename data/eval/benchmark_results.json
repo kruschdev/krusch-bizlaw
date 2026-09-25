@@ -1,0 +1,120 @@
+{
+  "benchmark": "krusch-bizlaw-contract-vs-statute",
+  "timestamp": "2026-09-25T17:16:46.905916+00:00",
+  "total_scenarios": 11,
+  "passed": 11,
+  "pass_rate_pct": 100.0,
+  "total_latency_ms": 0.8388289716094732,
+  "results": [
+    {
+      "id": "TC-01",
+      "name": "Post-AB 12 Security Deposit Violation (2.0 mo demanded post-2024-07-01)",
+      "passed": true,
+      "measured_alignment": "contract_less_than_mandatory",
+      "expected_alignment": "contract_less_than_mandatory",
+      "measured_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
+      "expected_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
+      "latency_ms": 0.08289195830002427
+    },
+    {
+      "id": "TC-02",
+      "name": "Pre-AB 12 Security Deposit Compliance (2.0 mo demanded pre-2024-07-01)",
+      "passed": true,
+      "measured_alignment": "aligned",
+      "expected_alignment": "aligned",
+      "measured_enforceability": "ENFORCEABLE",
+      "expected_enforceability": "ENFORCEABLE",
+      "latency_ms": 0.046039000153541565
+    },
+    {
+      "id": "TC-03",
+      "name": "Sub-Statutory Landlord Entry Notice (12 hrs vs 24 hr \u00a7 1954 floor)",
+      "passed": true,
+      "measured_alignment": "contract_less_than_mandatory",
+      "expected_alignment": "contract_less_than_mandatory",
+      "measured_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
+      "expected_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
+      "latency_ms": 0.03429903881624341
+    },
+    {
+      "id": "TC-04",
+      "name": "More Generous Landlord Entry Notice (48 hrs vs 24 hr \u00a7 1954 floor)",
+      "passed": true,
+      "measured_alignment": "contract_more_generous",
+      "expected_alignment": "contract_more_generous",
+      "measured_enforceability": "ENFORCEABLE",
+      "expected_enforceability": "ENFORCEABLE",
+      "latency_ms": 0.046643021050840616
+    },
+    {
+      "id": "TC-05",
+      "name": "Extended Security Deposit Return Timeline (45 days vs 21-day ceiling)",
+      "passed": true,
+      "measured_alignment": "contract_less_than_mandatory",
+      "expected_alignment": "contract_less_than_mandatory",
+      "measured_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
+      "expected_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
+      "latency_ms": 0.03473903052508831
+    },
+    {
+      "id": "TC-06",
+      "name": "Expedited Security Deposit Return Timeline (14 days vs 21-day ceiling)",
+      "passed": true,
+      "measured_alignment": "contract_more_generous",
+      "expected_alignment": "contract_more_generous",
+      "measured_enforceability": "ENFORCEABLE",
+      "expected_enforceability": "ENFORCEABLE",
+      "latency_ms": 0.03363698488101363
+    },
+    {
+      "id": "TC-07",
+      "name": "Prohibited Habitability & Repair-and-Deduct Waiver (\u00a7 1942.1)",
+      "passed": true,
+      "measured_alignment": "contract_less_than_mandatory",
+      "expected_alignment": "contract_less_than_mandatory",
+      "measured_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
+      "expected_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
+      "latency_ms": 0.02811901504173875
+    },
+    {
+      "id": "TC-08",
+      "name": "Prohibited Retaliation Defense Waiver (\u00a7 1942.5(h))",
+      "passed": true,
+      "measured_alignment": "contract_less_than_mandatory",
+      "expected_alignment": "contract_less_than_mandatory",
+      "measured_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
+      "expected_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
+      "latency_ms": 0.031233008485287428
+    },
+    {
+      "id": "TC-09",
+      "name": "Excessive Late Payment Fee / Liquidated Damages (15% vs 5% \u00a7 1671(d) ceiling)",
+      "passed": true,
+      "measured_alignment": "contract_less_than_mandatory",
+      "expected_alignment": "contract_less_than_mandatory",
+      "measured_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
+      "expected_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
+      "latency_ms": 0.040781975258141756
+    },
+    {
+      "id": "TC-10",
+      "name": "Commercial Lease Security Deposit Freedom of Contract (\u00a7 1950.7(f) flexibility)",
+      "passed": true,
+      "measured_alignment": "aligned",
+      "expected_alignment": "aligned",
+      "measured_enforceability": "ENFORCEABLE",
+      "expected_enforceability": "ENFORCEABLE",
+      "latency_ms": 0.024330976884812117
+    },
+    {
+      "id": "TC-11",
+      "name": "Untracked Topic Coverage Gap Detection (Unknown topic -> COVERAGE_GAP)",
+      "passed": true,
+      "measured_alignment": "coverage_gap",
+      "expected_alignment": "coverage_gap",
+      "measured_enforceability": "UNSPECIFIED",
+      "expected_enforceability": "UNSPECIFIED",
+      "latency_ms": 0.016608042642474174
+    }
+  ]
+}

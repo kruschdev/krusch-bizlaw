@@ -9,7 +9,7 @@ and municipal legal authorities, with first-class temporal awareness.
 from __future__ import annotations
 
 from datetime import date
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 
 STATUTORY_MANDATES: dict[str, dict[str, Any]] = {

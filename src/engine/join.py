@@ -21,6 +21,49 @@ from .models import (
     EnforceabilityVerdict,
 )
 
+WORD_TO_DIGIT: dict[str, float] = {
+    "zero": 0.0,
+    "one": 1.0,
+    "two": 2.0,
+    "three": 3.0,
+    "four": 4.0,
+    "five": 5.0,
+    "six": 6.0,
+    "seven": 7.0,
+    "eight": 8.0,
+    "nine": 9.0,
+    "ten": 10.0,
+    "twelve": 12.0,
+    "fourteen": 14.0,
+    "twenty-one": 21.0,
+    "twenty-four": 24.0,
+    "thirty": 30.0,
+    "forty-five": 45.0,
+    "sixty": 60.0,
+}
+
+
+def _extract_numeric_from_text(text: str, patterns: list[str], word_unit_pattern: Optional[str] = None) -> Optional[float]:
+    """Helper to extract numeric value from text using digit patterns and word-number mapping."""
+    if not text:
+        return None
+    for pat in patterns:
+        m = re.search(pat, text, re.IGNORECASE)
+        if m:
+            try:
+                return float(m.group(1))
+            except (ValueError, IndexError):
+                pass
+
+    if word_unit_pattern:
+        m_word = re.search(word_unit_pattern, text, re.IGNORECASE)
+        if m_word:
+            word = m_word.group(1).lower().strip()
+            if word in WORD_TO_DIGIT:
+                return WORD_TO_DIGIT[word]
+
+    return None
+
 
 def evaluate_contract_vs_statute_slots(
     topic: str,
@@ -76,8 +119,8 @@ def evaluate_contract_vs_statute_slots(
     if not statute_info:
         return ComplianceFinding(
             topic=topic_norm,
-            alignment=AlignmentVerdict.ALIGNED.value,
-            enforceability=EnforceabilityVerdict.ENFORCEABLE.value,
+            alignment=AlignmentVerdict.COVERAGE_GAP.value,
+            enforceability=EnforceabilityVerdict.UNSPECIFIED.value,
             coverage="partial",
             contract_clause=contract_clause_info,
             controlling_statute=None,
@@ -127,9 +170,11 @@ def evaluate_contract_vs_statute_slots(
                 or contract_slots.get("security_deposit_months")
             )
             if contract_val is None and raw_content:
-                m = re.search(r"(\d+(?:\.\d+)?)\s*(?:months?'?\s*(?:rent|deposit))", raw_content, re.IGNORECASE)
-                if m:
-                    contract_val = float(m.group(1))
+                contract_val = _extract_numeric_from_text(
+                    raw_content,
+                    patterns=[r"(\d+(?:\.\d+)?)\s*(?:months?'?\s*(?:rent|deposit))"],
+                    word_unit_pattern=r"([a-z-]+)\s*(?:months?'?\s*(?:rent|deposit))"
+                )
 
             if contract_val is not None:
                 contract_val = float(contract_val)
@@ -154,11 +199,14 @@ def evaluate_contract_vs_statute_slots(
             or contract_slots.get("min_hours")
         )
         if contract_val is None and raw_content:
-            m = re.search(r"(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)(?:\s+\w+){0,3}\s+notice", raw_content, re.IGNORECASE)
-            if not m:
-                m = re.search(r"(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)", raw_content, re.IGNORECASE)
-            if m:
-                contract_val = float(m.group(1))
+            contract_val = _extract_numeric_from_text(
+                raw_content,
+                patterns=[
+                    r"(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)(?:\s+\w+){0,3}\s+notice",
+                    r"(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)"
+                ],
+                word_unit_pattern=r"([a-z-]+)\s*(?:hours?|hrs?)(?:\s+\w+){0,3}\s+notice"
+            )
 
         if contract_val is not None:
             contract_val = float(contract_val)
@@ -187,9 +235,11 @@ def evaluate_contract_vs_statute_slots(
             or contract_slots.get("accounting_days")
         )
         if contract_days is None and raw_content:
-            m = re.search(r"(\d+)\s*(?:calendar\s+|business\s+)?days?", raw_content, re.IGNORECASE)
-            if m:
-                contract_days = float(m.group(1))
+            contract_days = _extract_numeric_from_text(
+                raw_content,
+                patterns=[r"(\d+)\s*(?:calendar\s+|business\s+)?days?"],
+                word_unit_pattern=r"([a-z-]+)\s*(?:calendar\s+|business\s+)?days?"
+            )
 
         if contract_days is not None:
             contract_days = float(contract_days)
@@ -262,9 +312,10 @@ def evaluate_contract_vs_statute_slots(
             or contract_slots.get("penalty_pct")
         )
         if contract_pct is None and raw_content:
-            m = re.search(r"(\d+(?:\.\d+)?)\s*%", raw_content)
-            if m:
-                contract_pct = float(m.group(1))
+            contract_pct = _extract_numeric_from_text(
+                raw_content,
+                patterns=[r"(\d+(?:\.\d+)?)\s*%"]
+            )
 
         if contract_pct is not None:
             contract_pct = float(contract_pct)
@@ -289,9 +340,10 @@ def evaluate_contract_vs_statute_slots(
             or contract_slots.get("annual_interest_pct")
         )
         if contract_interest is None and raw_content:
-            m = re.search(r"(\d+(?:\.\d+)?)\s*%\s*(?:per\s+annum|annual|interest)", raw_content, re.IGNORECASE)
-            if m:
-                contract_interest = float(m.group(1))
+            contract_interest = _extract_numeric_from_text(
+                raw_content,
+                patterns=[r"(\d+(?:\.\d+)?)\s*%\s*(?:per\s+annum|annual|interest)"]
+            )
 
         if contract_interest is not None:
             contract_interest = float(contract_interest)

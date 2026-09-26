@@ -14,14 +14,14 @@ import os
 import sys
 import time
 from datetime import date, datetime, timezone
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 # Ensure project root is in sys.path
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from src.engine.join import evaluate_contract_vs_statute_slots, synthesize_portfolio_response
+from src.engine.join import evaluate_contract_vs_statute_slots
 from src.engine.models import AlignmentVerdict, EnforceabilityVerdict
 
 # ANSI Styling

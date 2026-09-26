@@ -3,13 +3,14 @@
 > **Sovereign Cross-Domain Statutory Compliance Engine & Contract-vs-Statute Join Platform**  
 > *Unifying commercial contract terms from KruschBiz and non-waivable statutory authorities from KruschLaw to execute deterministic legal enforceability cross-examinations ("The Join") without LLM hallucinations.*
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Version: 0.1.0-alpha.1](https://img.shields.io/badge/Version-0.1.0--alpha.1-blue.svg)](https://github.com/kruschdev/krusch-bizlaw)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-blue.svg)](CHANGELOG.md)
 [![Python 3.11 | 3.12](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.31+-FF4B4B.svg?logo=streamlit&logoColor=white)](https://streamlit.io)
-[![Tests: 21 Passing](https://img.shields.io/badge/Tests-21%20Passing-brightgreen.svg)](tests/)
-[![Benchmark: 11/11 Passing](https://img.shields.io/badge/Benchmark-11%2F11%20(100%25)-brightgreen.svg)](scripts/eval_benchmark.py)
+[![Tests: 43 Passing](https://img.shields.io/badge/Tests-43%20Passing-brightgreen.svg)](tests/)
+[![Invariants: 10/10 Verified](https://img.shields.io/badge/Invariants-10%2F10%20Verified-brightgreen.svg)](docs/INVARIANTS.md)
+[![Benchmark: 11/11 (100%)](https://img.shields.io/badge/Benchmark-11%2F11%20(100%25)-brightgreen.svg)](scripts/eval_benchmark.py)
 
 ---
 
@@ -49,6 +50,25 @@ In high-stakes enterprise governance, conflating commercial contract precedence 
 - **KruschLaw** stays lightweight: Focuses strictly on statutory law, codes, precedents, and litigation evidence.
 - **KruschBiz** stays lightweight: Focuses strictly on corporate deal rooms, contract graphs, and commercial terms.
 - **KruschBizLaw unifies them**: Serves as the dedicated, deterministic cross-examination bridge evaluating contract slots directly against statutory floors and ceilings.
+
+---
+
+## 🛡️ The 10 Core Architectural Invariants
+
+KruschBizLaw is governed by 10 non-negotiable architectural invariants detailed in **[docs/INVARIANTS.md](docs/INVARIANTS.md)**:
+
+| Invariant | Name | Guarantee |
+|---|---|---|
+| **INV-1** | **Mandatory As-Of Date** | `as_of_date` is strictly mandatory. No silent defaulting to "today" is permitted. |
+| **INV-2** | **Deterministic Slot Evaluation** | Numerical thresholds and caps are evaluated via typed arithmetic, never LLM semantic similarity. |
+| **INV-3** | **AB 12 Temporal Boundary Gating** | 2-month deposit is valid pre-2024-07-01; strictly void post-enactment. |
+| **INV-4** | **Commercial Lease Freedom of Contract** | Commercial tenancies govern under § 1950.7(f) permissive waiver rather than residential ceilings. |
+| **INV-5** | **Non-Waivable Public Policy Gate** | Habitability (§ 1942.1) and retaliation (§ 1942.5(h)) waivers are deterministically voided. |
+| **INV-6** | **Fail-Closed Coverage Holes** | Missing provisions or unindexed topics return `coverage_gap` with `UNSPECIFIED` enforceability. |
+| **INV-7** | **Generous Term Recognition** | Exceeding minimum floors is `contract_more_generous` and `ENFORCEABLE`. |
+| **INV-8** | **Strict Loopback Data Residency** | Service binds to `127.0.0.1:8087`. External interface bindings rejected in production. |
+| **INV-9** | **Resilient Fleet Federation** | Client adapters handle disconnection or timeouts from KruschBiz/KruschLaw with graceful fallback. |
+| **INV-10** | **Trace & Audit Immutability** | Every finding generates a unique `trace_id` recording `coverage: partial` for audit trail provenance. |
 
 ---
 
@@ -96,22 +116,27 @@ KruschBizLaw is benchmarked against 11 real-world conflict pairs covering reside
 
 ## ⚡ Quickstart
 
-### 1. Launch FastAPI Backend Server (Port 8087)
+### 1. Run 60-Second Headless Demo (<0.01s Execution)
+```bash
+python3 scripts/demo_60s.py
+```
+
+### 2. Launch FastAPI Backend Server (Port 8087)
 ```bash
 python3 -m uvicorn src.backend.main:app --host 127.0.0.1 --port 8087
 ```
 
-### 2. Launch Streamlit Web UI (Port 8507)
+### 3. Launch Streamlit Web UI (Port 8507)
 ```bash
 streamlit run src/frontend/app.py --server.port 8507 --server.address 127.0.0.1
 ```
 
-### 3. Run Benchmark CLI (<1ms Execution)
+### 4. Run Benchmark Suite
 ```bash
 python3 scripts/eval_benchmark.py
 ```
 
-### 4. Run Automated Pytest Suite
+### 5. Run Automated Pytest Suite (43+ Tests)
 ```bash
 pytest tests -v
 ```
@@ -120,13 +145,17 @@ pytest tests -v
 
 ## 🌐 API Reference
 
-* `POST /api/conflicts/contract-vs-statute`: Execute cross-examination between contract slots and statutory mandates.
+* `POST /api/conflicts/contract-vs-statute`: Primary cross-examination between contract slots and statutory mandates.
 * `POST /api/evaluate/clause`: Direct evaluation of raw clause strings against statutory baselines.
 * `GET /api/mandates`: Enumerate registered statutory floors, ceilings, and prohibitions.
-* `GET /health`: Inspect service health and fleet connectivity to KruschBiz and KruschLaw.
+* `GET /health`: Inspect service health, loopback residency, and fleet connectivity to KruschBiz and KruschLaw.
 
 ---
 
-## 📜 License
+## 📜 Compliance, Provenance & Licensing
 
-KruschBizLaw is open-source software licensed under the **[MIT License](LICENSE)**.
+* **[docs/INVARIANTS.md](docs/INVARIANTS.md)**: Formal specification of INV-1 through INV-10 and regression test matrix.
+* **[data/CORPUS_LICENSE.md](data/CORPUS_LICENSE.md)**: Public domain statutory data provenance and synthetic evaluation licensing.
+* **[CHANGELOG.md](CHANGELOG.md)**: Chronological record of architectural enhancements.
+* **[CONTRIBUTING.md](CONTRIBUTING.md)**: Guidelines for contributing code and invariants.
+* KruschBizLaw is open-source software licensed under the **[MIT License](LICENSE)**.

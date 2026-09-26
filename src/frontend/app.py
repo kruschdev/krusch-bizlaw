@@ -8,9 +8,7 @@ Aesthetics: Cyber-Executive Slate/Navy & Gold, High-Contrast Typography, WCAG AA
 
 from __future__ import annotations
 
-import json
-from datetime import date, datetime
-import requests
+from datetime import date
 import streamlit as st
 
 st.set_page_config(
@@ -29,7 +27,7 @@ st.markdown("""
         color: #F8FAFC;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-    
+
     /* High-contrast React-Aria navigation tabs */
     div[data-testid="stTab"] p,
     div[data-testid="stTab"] span,
@@ -74,7 +72,7 @@ st.markdown("""
 
 # Imports from engine
 from src.engine.join import evaluate_contract_vs_statute_slots, synthesize_portfolio_response
-from src.engine.mandates import STATUTORY_MANDATES, resolve_statutory_mandate
+from src.engine.mandates import STATUTORY_MANDATES
 from src.backend.clients import KruschBizClient, KruschLawClient
 
 biz_client = KruschBizClient()
@@ -89,7 +87,7 @@ with st.sidebar:
     st.subheader("🖥️ Fleet Substrate Status")
     biz_up = biz_client.check_health()
     law_up = law_client.check_health()
-    
+
     st.markdown(f"""
     - **KruschBiz (8086)**: {"🟢 Online" if biz_up else "🔴 Offline (Mock Active)"}
     - **KruschLaw (8085)**: {"🟢 Online" if law_up else "🔴 Offline (Mock Active)"}
@@ -113,7 +111,7 @@ tab1, tab2, tab3 = st.tabs([
 with tab1:
     st.markdown("### 🔍 Execute Statutory Compliance Cross-Examination")
     st.write("Compare controlling commercial contract clauses resolved via KruschBiz against non-waivable statutory floors and ceilings resolved via KruschLaw.")
-    
+
     col1, col2, col3 = st.columns([1, 1, 1])
     with col1:
         counterparty = st.text_input("Counterparty / Tenant Entity", value="Highland Residential LLC")
@@ -130,7 +128,7 @@ with tab1:
 
     st.subheader("📝 Contract Provision Input (Direct Slots or Text)")
     use_manual_input = st.toggle("Inject Custom Contract Slots", value=True)
-    
+
     contract_slots = {}
     if use_manual_input:
         c_col1, c_col2, c_col3 = st.columns(3)
@@ -143,7 +141,7 @@ with tab1:
         with c_col3:
             return_days = st.number_input("Deposit Return Timeline (Days)", value=45.0, step=1.0)
             contract_slots["deposit_return_days"] = return_days
-        
+
         w_col1, w_col2 = st.columns(2)
         with w_col1:
             waives_hab = st.checkbox("Includes As-Is Habitability Waiver", value=True)
@@ -162,7 +160,7 @@ with tab1:
                 property_type=property_type
             )
             findings.append(f)
-        
+
         resp = synthesize_portfolio_response(
             findings=findings,
             as_of_date=str(as_of_date_val),
@@ -172,7 +170,7 @@ with tab1:
 
         st.divider()
         st.subheader("📋 Executive Audit Verdict")
-        
+
         m_col1, m_col2, m_col3, m_col4 = st.columns(4)
         m_col1.metric("Overall Verdict", resp.verdict)
         m_col2.metric("Violations / Void Terms", resp.summary["non_compliant"], delta_color="inverse")
@@ -210,14 +208,14 @@ with tab1:
 with tab2:
     st.markdown("### 📊 Empirical Benchmark Suite: 11 Fixture Scenarios")
     st.write("Live evaluation harness testing deterministic slot cross-examinations across California statutory milestones.")
-    
+
     from scripts.eval_benchmark import BENCHMARK_SCENARIOS
 
     if st.button("▶️ Run Automated Benchmark", type="primary"):
         from scripts.eval_benchmark import run_benchmark
         results = run_benchmark()
         st.success(f"Benchmark Complete! {results['passed']}/{results['total_scenarios']} passed in {results['total_latency_ms']:.2f}ms.")
-    
+
     st.table([
         {
             "ID": tc["id"],
@@ -235,7 +233,7 @@ with tab2:
 with tab3:
     st.markdown("### 📜 Statutory Mandates & Non-Waivable Public Policy Registry")
     st.write("Authoritative rules catalog used by KruschBizLaw to evaluate contract slot validity.")
-    
+
     for topic, data in STATUTORY_MANDATES.items():
         with st.expander(f"📌 {topic} — {data['citation']}"):
             st.write(f"**Mandate Type:** `{data['mandate_type']}`")

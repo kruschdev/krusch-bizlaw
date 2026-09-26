@@ -3,40 +3,58 @@ src/backend/main.py
 ===================
 FastAPI REST API Server for KruschBizLaw.
 Default loopback binding: 127.0.0.1:8087.
+Sovereign Cross-Domain Statutory Compliance Platform ("The Join").
 """
 
 from __future__ import annotations
 
 import logging
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, Request, Response, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
 
 from ..engine.join import evaluate_contract_vs_statute_slots, synthesize_portfolio_response
-from ..engine.mandates import STATUTORY_MANDATES, resolve_statutory_mandate
+from ..engine.mandates import STATUTORY_MANDATES
 from ..engine.models import (
     ContractVsStatuteRequest,
     ContractVsStatuteResponse,
     ComplianceFinding,
 )
 from .clients import KruschBizClient, KruschLawClient
+from .config import is_strict_loopback, settings, validate_security_invariants
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("kruschbizlaw.api")
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifecycle event enforcing security invariants and loopback residency on startup."""
+    logger.info("Initializing KruschBizLaw Sovereign Statutory Compliance Platform...")
+    validate_security_invariants(settings)
+    loopback_ok = is_strict_loopback(settings.HOST)
+    logger.info(
+        f"KruschBizLaw listening on {settings.HOST}:{settings.PORT} "
+        f"[Strict Loopback: {'YES' if loopback_ok else 'NO'}, Env: {settings.APP_ENV}]"
+    )
+    yield
+    logger.info("KruschBizLaw shutting down cleanly.")
+
+
 app = FastAPI(
     title="KruschBizLaw API",
-    version="0.1.0-alpha.1",
-    description="Sovereign Cross-Domain Statutory Compliance Engine & Contract-vs-Statute Join Platform"
+    version="0.2.0",
+    description="Sovereign Cross-Domain Statutory Compliance Engine & Contract-vs-Statute Join Platform",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -46,6 +64,24 @@ biz_client = KruschBizClient()
 law_client = KruschLawClient()
 
 
+def verify_api_key(
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    api_key: Optional[str] = Query(None)
+) -> Optional[str]:
+    """Verify API key outside development or when REQUIRE_API_KEY is enabled."""
+    env = (settings.APP_ENV or settings.ENVIRONMENT or "development").lower()
+    if env == "development" and not settings.REQUIRE_API_KEY:
+        return x_api_key or api_key or "dev_bypass"
+
+    token = x_api_key or api_key
+    if not token or (settings.API_KEY and token != settings.API_KEY):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing API key."
+        )
+    return token
+
+
 @app.get("/health")
 def health_check(request: Request) -> Dict[str, Any]:
     """Health & fleet node connectivity check."""
@@ -53,7 +89,9 @@ def health_check(request: Request) -> Dict[str, Any]:
     return {
         "status": "healthy",
         "service": "krusch-bizlaw",
-        "version": "0.1.0-alpha.1",
+        "version": "0.2.0",
+        "environment": settings.APP_ENV,
+        "is_strict_loopback": is_strict_loopback(settings.HOST),
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "client_host": client_host,
         "fleet_connectivity": {
@@ -73,7 +111,10 @@ def list_statutory_mandates() -> Dict[str, Any]:
 
 
 @app.post("/api/conflicts/contract-vs-statute", response_model=ContractVsStatuteResponse)
-def evaluate_compliance(req: ContractVsStatuteRequest) -> ContractVsStatuteResponse:
+def evaluate_compliance(
+    req: ContractVsStatuteRequest,
+    _auth: Optional[str] = Depends(verify_api_key)
+) -> ContractVsStatuteResponse:
     """
     Primary Join endpoint:
     Compares controlling contract clause slots against statutory floors and ceilings.
@@ -85,7 +126,7 @@ def evaluate_compliance(req: ContractVsStatuteRequest) -> ContractVsStatuteRespo
         )
 
     try:
-        as_of = datetime.strptime(req.as_of_date, "%Y-%m-%d").date()
+        as_of = datetime.strptime(req.as_of_date.strip(), "%Y-%m-%d").date()
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -101,7 +142,7 @@ def evaluate_compliance(req: ContractVsStatuteRequest) -> ContractVsStatuteRespo
 
         # If connected to KruschBiz and counterparty specified, consult live DAG
         if req.counterparty and not contract_slots:
-            clause = biz_client.consult_controlling_clause(
+            clause = biz_client.get_controlling_clause(
                 counterparty=req.counterparty,
                 topic=topic,
                 as_of_date=req.as_of_date
@@ -148,11 +189,18 @@ def evaluate_single_clause(
     topic: str,
     as_of_date: str,
     clause_text: str,
-    property_type: str = "residential"
+    property_type: str = "residential",
+    _auth: Optional[str] = Depends(verify_api_key)
 ) -> ComplianceFinding:
     """Evaluate an arbitrary clause string directly against statutory mandates."""
+    if not as_of_date or not as_of_date.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Non-negotiable Invariant: 'as_of_date' is mandatory. No silent 'today' is permitted."
+        )
+
     try:
-        as_of = datetime.strptime(as_of_date, "%Y-%m-%d").date()
+        as_of = datetime.strptime(as_of_date.strip(), "%Y-%m-%d").date()
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

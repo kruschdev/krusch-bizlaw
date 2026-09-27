@@ -1,10 +1,10 @@
 {
   "benchmark": "krusch-bizlaw-contract-vs-statute",
-  "timestamp": "2026-09-26T03:07:08.245504+00:00",
+  "timestamp": "2026-09-27T07:31:26.674584+00:00",
   "total_scenarios": 11,
   "passed": 11,
   "pass_rate_pct": 100.0,
-  "total_latency_ms": 0.8889210294000804,
+  "total_latency_ms": 0.9317549411207438,
   "results": [
     {
       "id": "TC-01",
@@ -14,7 +14,7 @@
       "expected_alignment": "contract_less_than_mandatory",
       "measured_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
       "expected_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
-      "latency_ms": 0.07652002386748791
+      "latency_ms": 0.09382294956594706
     },
     {
       "id": "TC-02",
@@ -24,7 +24,7 @@
       "expected_alignment": "aligned",
       "measured_enforceability": "ENFORCEABLE",
       "expected_enforceability": "ENFORCEABLE",
-      "latency_ms": 0.042525993194431067
+      "latency_ms": 0.0631759176030755
     },
     {
       "id": "TC-03",
@@ -34,7 +34,7 @@
       "expected_alignment": "contract_less_than_mandatory",
       "measured_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
       "expected_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
-      "latency_ms": 0.03520195605233312
+      "latency_ms": 0.04569592420011759
     },
     {
       "id": "TC-04",
@@ -44,7 +44,7 @@
       "expected_alignment": "contract_more_generous",
       "measured_enforceability": "ENFORCEABLE",
       "expected_enforceability": "ENFORCEABLE",
-      "latency_ms": 0.04958704812452197
+      "latency_ms": 0.05056208465248346
     },
     {
       "id": "TC-05",
@@ -54,7 +54,7 @@
       "expected_alignment": "contract_less_than_mandatory",
       "measured_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
       "expected_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
-      "latency_ms": 0.04342704778537154
+      "latency_ms": 0.043620006181299686
     },
     {
       "id": "TC-06",
@@ -64,7 +64,7 @@
       "expected_alignment": "contract_more_generous",
       "measured_enforceability": "ENFORCEABLE",
       "expected_enforceability": "ENFORCEABLE",
-      "latency_ms": 0.03229902358725667
+      "latency_ms": 0.04241999704390764
     },
     {
       "id": "TC-07",
@@ -74,7 +74,7 @@
       "expected_alignment": "contract_less_than_mandatory",
       "measured_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
       "expected_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
-      "latency_ms": 0.029244984034448862
+      "latency_ms": 0.022685970179736614
     },
     {
       "id": "TC-08",
@@ -84,7 +84,7 @@
       "expected_alignment": "contract_less_than_mandatory",
       "measured_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
       "expected_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
-      "latency_ms": 0.023106986191123724
+      "latency_ms": 0.025375979021191597
     },
     {
       "id": "TC-09",
@@ -94,7 +94,7 @@
       "expected_alignment": "contract_less_than_mandatory",
       "measured_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
       "expected_enforceability": "VOID_AS_AGAINST_PUBLIC_POLICY",
-      "latency_ms": 0.023551983758807182
+      "latency_ms": 0.02541497815400362
     },
     {
       "id": "TC-10",
@@ -104,7 +104,7 @@
       "expected_alignment": "aligned",
       "measured_enforceability": "ENFORCEABLE",
       "expected_enforceability": "ENFORCEABLE",
-      "latency_ms": 0.021498010028153658
+      "latency_ms": 0.01945707481354475
     },
     {
       "id": "TC-11",
@@ -114,7 +114,7 @@
       "expected_alignment": "coverage_gap",
       "measured_enforceability": "UNSPECIFIED",
       "expected_enforceability": "UNSPECIFIED",
-      "latency_ms": 0.020303006749600172
+      "latency_ms": 0.016865902580320835
     }
   ]
 }

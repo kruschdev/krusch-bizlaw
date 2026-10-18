@@ -130,9 +130,43 @@ def main():
     print(f"  -> Controlling Statute:  {f6.controlling_statute}")
     print(f"  -> Legal Explanation:   {f6.explanation}")
 
+    # Step 7: Commercial Non-Compete Restraint (BPC § 16600)
+    print("\n" + "=" * 78)
+    print("Step 7: Commercial / Employment Non-Compete Restraint (BPC § 16600)")
+    print("-" * 78)
+    f7 = evaluate_contract_vs_statute_slots(
+        topic="NON_COMPETE",
+        as_of=date(2024, 8, 1),
+        contract_slots={"restrains_trade": True},
+        raw_content="Employee agrees not to engage in or establish any competing enterprise for 24 months."
+    )
+    print("  [Contract Term: Post-employment non-compete restraint for 24 months]")
+    print(f"  -> Controlling Statute:  {f7.controlling_statute['citation']}")
+    print(f"  -> Mandate Type:        {f7.controlling_statute['mandate_type']}")
+    print(f"  -> Alignment Verdict:   {f7.alignment.upper()}")
+    print(f"  -> Enforceability:      {f7.enforceability}")
+    print(f"  -> Legal Explanation:   {f7.explanation}")
+
+    # Step 8: Unilateral Attorney Fee Preemption (CC § 1717)
+    print("\n" + "=" * 78)
+    print("Step 8: Unilateral Attorney Fee Preemption & Bilateral Rewrite (CC § 1717)")
+    print("-" * 78)
+    f8 = evaluate_contract_vs_statute_slots(
+        topic="ATTORNEY_FEE_RECIPROCITY",
+        as_of=date(2024, 8, 1),
+        contract_slots={"unilateral_fee_shifting": True},
+        raw_content="Borrower shall pay all attorney fees incurred by Lender in enforcement."
+    )
+    print("  [Contract Term: Borrower shall pay all attorney's fees incurred by Lender]")
+    print(f"  -> Controlling Statute:  {f8.controlling_statute['citation']}")
+    print(f"  -> Mandate Type:        {f8.controlling_statute['mandate_type']}")
+    print(f"  -> Alignment Verdict:   {f8.alignment.upper()}")
+    print(f"  -> Enforceability:      {f8.enforceability}")
+    print(f"  -> Legal Explanation:   {f8.explanation}")
+
     # Portfolio Summary
     portfolio = synthesize_portfolio_response(
-        findings=[f1, f2, f3, f4, f5, f6],
+        findings=[f1, f2, f3, f4, f5, f6, f7, f8],
         as_of_date="2024-08-01",
         jurisdiction="CA:Oakland",
         counterparty="Sovereign Holdings LLC"
@@ -140,7 +174,7 @@ def main():
 
     elapsed = time.perf_counter() - t0
     print("\n" + "=" * 78)
-    print(f"  DEMO COMPLETE: All 6 cross-domain join checks executed in {elapsed:.3f}s")
+    print(f"  DEMO COMPLETE: All 8 cross-domain join checks executed in {elapsed:.3f}s")
     print(f"  Portfolio Verdict: {portfolio.verdict}")
     print(f"  Summary: {portfolio.summary}")
     print("  Status: 100% Deterministic Air-Gapped Precision Verified")

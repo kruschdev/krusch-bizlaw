@@ -99,6 +99,7 @@ def evaluate_contract_vs_statute_slots(
     property_type: str = "residential",
     statute_override: Optional[Dict[str, Any]] = None,
     include_precedents: bool = False,
+    raw_content: Optional[str] = None,
 ) -> ComplianceFinding:
     """
     Deterministically evaluate a single contract clause's slots against
@@ -106,6 +107,9 @@ def evaluate_contract_vs_statute_slots(
     """
     topic_norm = normalize_topic(topic)
     trace_id = f"trace_bizlaw_{uuid.uuid4().hex[:12]}"
+
+    if raw_content and not contract_clause_info:
+        contract_clause_info = {"span": raw_content, "topic": topic_norm}
 
     # Resolve governing statute
     statute_info = statute_override or resolve_statutory_mandate(
@@ -156,7 +160,9 @@ def evaluate_contract_vs_statute_slots(
         )
 
     # Extract raw content for regex fallback if needed
-    raw_content = contract_clause_info.get("span", "") if contract_clause_info else ""
+    if not raw_content and contract_clause_info:
+        raw_content = contract_clause_info.get("span", "")
+    raw_content = raw_content or ""
 
     alignment = AlignmentVerdict.ALIGNED.value
     enforceability = EnforceabilityVerdict.ENFORCEABLE.value
@@ -385,6 +391,100 @@ def evaluate_contract_vs_statute_slots(
                 alignment = AlignmentVerdict.ALIGNED.value
                 enforceability = EnforceabilityVerdict.ENFORCEABLE.value
                 explanation = f"Contract interest rate ({contract_interest}%) conforms to constitutional usury ceiling ({stat_max_apr}%)."
+
+    # 8. NON-COMPETE COVENANTS (BPC § 16600)
+    elif topic_norm == "NON_COMPETE":
+        has_non_compete = (
+            contract_slots.get("restrains_trade")
+            or contract_slots.get("prohibits_competition")
+            or contract_slots.get("non_compete")
+        )
+        if has_non_compete is None and raw_content:
+            has_non_compete = bool(
+                re.search(r"\b(?:not\s+compete|non-?compete|restrain(?:ed)?\s+from\s+engag(?:ing)?|prohibit(?:ed)?\s+from\s+working)\b", raw_content, re.IGNORECASE)
+            )
+
+        if has_non_compete:
+            alignment = AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+            enforceability = EnforceabilityVerdict.VOID_AS_AGAINST_PUBLIC_POLICY.value
+            explanation = (
+                f"Contract non-compete covenant is void ab initio as contrary to strong California public policy "
+                f"under {statute_info['citation']} (AB 1076 & SB 699)."
+            )
+        else:
+            alignment = AlignmentVerdict.ALIGNED.value
+            enforceability = EnforceabilityVerdict.ENFORCEABLE.value
+            explanation = f"Contract contains no unlawful non-compete restraint under {statute_info['citation']}."
+
+    # 9. EXCULPATORY CLAUSES / LIABILITY WAIVERS (CC § 1668)
+    elif topic_norm == "EXCULPATORY_CLAUSE":
+        waives_willful_or_statutory = (
+            contract_slots.get("waives_gross_negligence")
+            or contract_slots.get("waives_intentional_misconduct")
+            or contract_slots.get("exempts_all_liability")
+        )
+        if waives_willful_or_statutory is None and raw_content:
+            waives_willful_or_statutory = bool(
+                re.search(r"\b(?:gross\s+negligence|willful|any\s+and\s+all\s+liability|sole\s+negligence|statutory\s+violation)\b", raw_content, re.IGNORECASE)
+            )
+
+        if waives_willful_or_statutory:
+            alignment = AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+            enforceability = EnforceabilityVerdict.VOID_AS_AGAINST_PUBLIC_POLICY.value
+            explanation = (
+                f"Contract exculpatory clause purporting to exempt liability for gross negligence, willful injury, "
+                f"or statutory violation is void under {statute_info['citation']}."
+            )
+        else:
+            alignment = AlignmentVerdict.ALIGNED.value
+            enforceability = EnforceabilityVerdict.ENFORCEABLE.value
+            explanation = f"Contract limitation of liability complies with permissible commercial allocation standards under {statute_info['citation']}."
+
+    # 10. ATTORNEY FEE RECIPROCITY (CC § 1717)
+    elif topic_norm == "ATTORNEY_FEE_RECIPROCITY":
+        is_unilateral = (
+            contract_slots.get("unilateral_fee_shifting")
+            or contract_slots.get("one_way_fees")
+        )
+        if is_unilateral is None and raw_content:
+            is_unilateral = bool(
+                re.search(r"\b(?:tenant\s+shall\s+pay|borrower\s+shall\s+pay|buyer\s+shall\s+pay|employee\s+shall\s+pay)\s+(?:all\s+)?attorney(?:'?s)?\s+fees\b", raw_content, re.IGNORECASE)
+            ) and not bool(re.search(r"\bprevailing\s+party\b", raw_content, re.IGNORECASE))
+
+        if is_unilateral:
+            alignment = AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+            enforceability = EnforceabilityVerdict.PREEMPTED.value
+            explanation = (
+                f"Unilateral attorney fee clause is preempted and transformed into a reciprocal bilateral covenant "
+                f"by operation of law under {statute_info['citation']}."
+            )
+        else:
+            alignment = AlignmentVerdict.ALIGNED.value
+            enforceability = EnforceabilityVerdict.ENFORCEABLE.value
+            explanation = f"Contractual attorney fee provision is reciprocal and enforceable under {statute_info['citation']}."
+
+    # 11. EMPLOYEE EXPENSE REIMBURSEMENT (LC § 2802)
+    elif topic_norm == "EXPENSE_REIMBURSEMENT":
+        waives_reimbursement = (
+            contract_slots.get("waives_reimbursement")
+            or contract_slots.get("employee_bears_expenses")
+        )
+        if waives_reimbursement is None and raw_content:
+            waives_reimbursement = bool(
+                re.search(r"\b(?:at\s+(?:employee's|worker's)\s+own\s+expense|no\s+reimbursement|waives?\s+(?:all\s+)?expenses?)\b", raw_content, re.IGNORECASE)
+            )
+
+        if waives_reimbursement:
+            alignment = AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+            enforceability = EnforceabilityVerdict.VOID_AS_AGAINST_PUBLIC_POLICY.value
+            explanation = (
+                f"Contract purporting to waive or deny necessary employee business expense indemnification "
+                f"is null and void under {statute_info['citation']} and Labor Code § 2804."
+            )
+        else:
+            alignment = AlignmentVerdict.ALIGNED.value
+            enforceability = EnforceabilityVerdict.ENFORCEABLE.value
+            explanation = f"Contract expense terms conform to statutory indemnification mandates under {statute_info['citation']}."
 
     controlling_precedents: List[Dict[str, Any]] = []
     if include_precedents:

@@ -91,6 +91,38 @@ STATUTORY_MANDATES: dict[str, dict[str, Any]] = {
         "unit": "percent_per_annum",
         "statutory_text": "The maximum legal rate of interest for non-exempt commercial obligations is 10 percent per annum.",
         "non_waivable": True,
+    },
+    "NON_COMPETE": {
+        "citation": "Cal. Bus. & Prof. Code § 16600",
+        "mandate_type": "STATUTORY_PROHIBITION",
+        "slot_key": "restraint_of_trade",
+        "unit": "prohibited_covenant",
+        "statutory_text": "Every contract by which anyone is restrained from engaging in a lawful profession, trade, or business of any kind is to that extent void (AB 1076 & SB 699).",
+        "non_waivable": True,
+    },
+    "EXCULPATORY_CLAUSE": {
+        "citation": "Cal. Civ. Code § 1668",
+        "mandate_type": "STATUTORY_PROHIBITION",
+        "slot_key": "exemption_from_liability",
+        "unit": "prohibited_waiver",
+        "statutory_text": "All contracts which have for their object to exempt anyone from responsibility for his own fraud, willful injury, or violation of law are void as contrary to public policy.",
+        "non_waivable": True,
+    },
+    "ATTORNEY_FEE_RECIPROCITY": {
+        "citation": "Cal. Civ. Code § 1717",
+        "mandate_type": "STATUTORY_FLOOR",
+        "slot_key": "reciprocal_attorney_fees",
+        "unit": "statutory_mutuality",
+        "statutory_text": "Where a contract provides for attorney's fees incurred by one party, the party determined to be the prevailing party shall be entitled to reasonable attorney's fees as a non-waivable reciprocal right.",
+        "non_waivable": True,
+    },
+    "EXPENSE_REIMBURSEMENT": {
+        "citation": "Cal. Lab. Code § 2802",
+        "mandate_type": "STATUTORY_FLOOR",
+        "slot_key": "employee_reimbursement",
+        "unit": "mandatory_indemnification",
+        "statutory_text": "An employer shall indemnify an employee for all necessary expenditures or losses incurred in direct consequence of discharge of duties. Any waiver is null and void under § 2804.",
+        "non_waivable": True,
     }
 }
 
@@ -102,6 +134,14 @@ TOPIC_ALIASES: dict[str, str] = {
     "USURY": "PAYMENT_TERMS",
     "INTEREST_RATE": "PAYMENT_TERMS",
     "COMMERCIAL_DEPOSIT": "COMMERCIAL_SECURITY_DEPOSIT",
+    "NON_COMPETE_CLAUSE": "NON_COMPETE",
+    "COVENANT_NOT_TO_COMPETE": "NON_COMPETE",
+    "LIABILITY_WAIVER": "EXCULPATORY_CLAUSE",
+    "EXCULPATION": "EXCULPATORY_CLAUSE",
+    "ATTORNEY_FEES": "ATTORNEY_FEE_RECIPROCITY",
+    "FEE_SHIFTING": "ATTORNEY_FEE_RECIPROCITY",
+    "EXPENSES": "EXPENSE_REIMBURSEMENT",
+    "REMOTE_WORK_EXPENSES": "EXPENSE_REIMBURSEMENT",
 }
 
 
@@ -181,5 +221,23 @@ def resolve_statutory_mandate(
     elif topic_norm in ("LATE_FEE", "PAYMENT_TERMS"):
         pct = mandate.get("max_penalty_pct") or mandate.get("max_annual_interest_pct", 10.0)
         result["normalized_slot"] = {"max_pct": pct}
+
+    elif topic_norm in ("NON_COMPETE", "EXCULPATORY_CLAUSE"):
+        result["normalized_slot"] = {
+            "waiver_prohibited": True,
+            "statute_voids_covenant": True
+        }
+
+    elif topic_norm == "ATTORNEY_FEE_RECIPROCITY":
+        result["normalized_slot"] = {
+            "unilateral_clause_void": True,
+            "statutory_bilateral_mutuality": True
+        }
+
+    elif topic_norm == "EXPENSE_REIMBURSEMENT":
+        result["normalized_slot"] = {
+            "indemnification_mandatory": True,
+            "waiver_void_under_2804": True
+        }
 
     return result

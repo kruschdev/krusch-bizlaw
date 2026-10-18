@@ -150,3 +150,104 @@ def test_controlling_precedents_retrieval():
         assert "citation" in p
         assert "score" in p
 
+
+def test_non_compete_clause_void():
+    """Non-compete covenant is void as against public policy under BPC § 16600."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="NON_COMPETE",
+        as_of=date(2024, 8, 1),
+        contract_slots={"restrains_trade": True},
+        raw_content="Employee agrees not to engage in competing business for 2 years after separation."
+    )
+    assert finding.alignment == AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+    assert finding.enforceability == EnforceabilityVerdict.VOID_AS_AGAINST_PUBLIC_POLICY.value
+    assert "16600" in finding.controlling_statute["citation"]
+
+
+def test_non_compete_compliant():
+    """Contract without non-compete restraints conforms to BPC § 16600."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="NON_COMPETE",
+        as_of=date(2024, 8, 1),
+        contract_slots={"restrains_trade": False},
+        raw_content="Employee agrees to protect confidential trade secrets during employment."
+    )
+    assert finding.alignment == AlignmentVerdict.ALIGNED.value
+    assert finding.enforceability == EnforceabilityVerdict.ENFORCEABLE.value
+
+
+def test_exculpatory_clause_void():
+    """Clause exempting gross negligence or willful injury is void under CC § 1668."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="EXCULPATORY_CLAUSE",
+        as_of=date(2024, 8, 1),
+        contract_slots={"waives_gross_negligence": True},
+        raw_content="Vendor shall have no liability for any gross negligence or willful misconduct."
+    )
+    assert finding.alignment == AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+    assert finding.enforceability == EnforceabilityVerdict.VOID_AS_AGAINST_PUBLIC_POLICY.value
+    assert "1668" in finding.controlling_statute["citation"]
+
+
+def test_exculpatory_clause_compliant():
+    """Standard commercial liability cap excluding willful harm is enforceable."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="EXCULPATORY_CLAUSE",
+        as_of=date(2024, 8, 1),
+        contract_slots={"waives_gross_negligence": False},
+        raw_content="In no event shall liability exceed total fees paid under this agreement."
+    )
+    assert finding.alignment == AlignmentVerdict.ALIGNED.value
+    assert finding.enforceability == EnforceabilityVerdict.ENFORCEABLE.value
+
+
+def test_unilateral_attorney_fee_preempted():
+    """Unilateral fee clause is preempted and rendered reciprocal under CC § 1717."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="ATTORNEY_FEE_RECIPROCITY",
+        as_of=date(2024, 8, 1),
+        contract_slots={"unilateral_fee_shifting": True},
+        raw_content="Borrower shall pay all attorney's fees incurred by Lender in enforcement."
+    )
+    assert finding.alignment == AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+    assert finding.enforceability == EnforceabilityVerdict.PREEMPTED.value
+    assert "1717" in finding.controlling_statute["citation"]
+
+
+def test_bilateral_attorney_fee_enforceable():
+    """Mutual prevailing party fee clause is enforceable under CC § 1717."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="ATTORNEY_FEE_RECIPROCITY",
+        as_of=date(2024, 8, 1),
+        contract_slots={"unilateral_fee_shifting": False},
+        raw_content="The prevailing party in any action shall be entitled to recover reasonable attorney fees."
+    )
+    assert finding.alignment == AlignmentVerdict.ALIGNED.value
+    assert finding.enforceability == EnforceabilityVerdict.ENFORCEABLE.value
+
+
+def test_employee_expense_waiver_void():
+    """Employee bearing business expenses is void under LC § 2802 and § 2804."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="EXPENSE_REIMBURSEMENT",
+        as_of=date(2024, 8, 1),
+        contract_slots={"waives_reimbursement": True},
+        raw_content="Remote employee shall provide cellular phone and high-speed internet at employee's own expense with no reimbursement."
+    )
+    assert finding.alignment == AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+    assert finding.enforceability == EnforceabilityVerdict.VOID_AS_AGAINST_PUBLIC_POLICY.value
+    assert "2802" in finding.controlling_statute["citation"]
+
+
+def test_employee_expense_reimbursement_compliant():
+    """Contract reimbursing employee expenditures conforms to LC § 2802."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="EXPENSE_REIMBURSEMENT",
+        as_of=date(2024, 8, 1),
+        contract_slots={"waives_reimbursement": False},
+        raw_content="Employer shall indemnify employee for all reasonable and necessary business expenses."
+    )
+    assert finding.alignment == AlignmentVerdict.ALIGNED.value
+    assert finding.enforceability == EnforceabilityVerdict.ENFORCEABLE.value
+
+

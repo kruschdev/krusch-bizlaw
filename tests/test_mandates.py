@@ -19,7 +19,11 @@ def test_mandates_presence():
         "COMMERCIAL_SECURITY_DEPOSIT",
         "RETALIATION_WAIVER",
         "LATE_FEE",
-        "PAYMENT_TERMS"
+        "PAYMENT_TERMS",
+        "NON_COMPETE",
+        "EXCULPATORY_CLAUSE",
+        "ATTORNEY_FEE_RECIPROCITY",
+        "EXPENSE_REIMBURSEMENT",
     ]
     for key in expected_keys:
         assert key in STATUTORY_MANDATES
@@ -31,6 +35,10 @@ def test_topic_normalization():
     assert normalize_topic("repair_deduct") == "REPAIR_AND_DEDUCT"
     assert normalize_topic("usury") == "PAYMENT_TERMS"
     assert normalize_topic("habitability") == "HABITABILITY_WAIVER"
+    assert normalize_topic("non_compete_clause") == "NON_COMPETE"
+    assert normalize_topic("liability_waiver") == "EXCULPATORY_CLAUSE"
+    assert normalize_topic("attorney_fees") == "ATTORNEY_FEE_RECIPROCITY"
+    assert normalize_topic("expenses") == "EXPENSE_REIMBURSEMENT"
 
 
 def test_ab12_temporal_split():
@@ -47,3 +55,24 @@ def test_commercial_lease_override():
     comm = resolve_statutory_mandate("SECURITY_DEPOSIT", date(2024, 8, 1), property_type="commercial")
     assert comm["citation"] == "Cal. Civ. Code § 1950.7"
     assert comm["non_waivable"] is False
+
+
+def test_new_mandates_resolution():
+    """Verify resolution of commercial and labor mandates."""
+    nc = resolve_statutory_mandate("NON_COMPETE", date(2024, 8, 1))
+    assert nc["citation"] == "Cal. Bus. & Prof. Code § 16600"
+    assert nc["non_waivable"] is True
+    assert nc["normalized_slot"]["waiver_prohibited"] is True
+
+    ex = resolve_statutory_mandate("EXCULPATORY_CLAUSE", date(2024, 8, 1))
+    assert ex["citation"] == "Cal. Civ. Code § 1668"
+    assert ex["non_waivable"] is True
+
+    af = resolve_statutory_mandate("ATTORNEY_FEE_RECIPROCITY", date(2024, 8, 1))
+    assert af["citation"] == "Cal. Civ. Code § 1717"
+    assert af["normalized_slot"]["statutory_bilateral_mutuality"] is True
+
+    er = resolve_statutory_mandate("EXPENSE_REIMBURSEMENT", date(2024, 8, 1))
+    assert er["citation"] == "Cal. Lab. Code § 2802"
+    assert er["normalized_slot"]["indemnification_mandatory"] is True
+

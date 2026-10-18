@@ -65,6 +65,32 @@ def _extract_numeric_from_text(text: str, patterns: list[str], word_unit_pattern
     return None
 
 
+def resolve_controlling_precedents(
+    topic: str,
+    query_text: Optional[str] = None,
+    limit: int = 2
+) -> List[Dict[str, Any]]:
+    """Retrieve supporting or controlling judicial precedents from KruschNexus Legal Cartridge."""
+    try:
+        from krusch_nexus.legal_cartridge import LegalAuthorityCartridge
+        cart = LegalAuthorityCartridge()
+        search_query = query_text or topic.replace("_", " ").lower()
+        hits = cart.search(query=search_query, limit=limit, source_table="cases")
+        precedents = []
+        for h in hits:
+            precedents.append({
+                "citation": h.get("citation"),
+                "title": h.get("title"),
+                "decision_year": h.get("decision_year"),
+                "court": h.get("court"),
+                "score": float(h.get("score", 0.0)),
+                "snippet": h.get("text", "")[:300]
+            })
+        return precedents
+    except Exception:
+        return []
+
+
 def evaluate_contract_vs_statute_slots(
     topic: str,
     as_of: date,
@@ -72,6 +98,7 @@ def evaluate_contract_vs_statute_slots(
     contract_clause_info: Optional[Dict[str, Any]] = None,
     property_type: str = "residential",
     statute_override: Optional[Dict[str, Any]] = None,
+    include_precedents: bool = False,
 ) -> ComplianceFinding:
     """
     Deterministically evaluate a single contract clause's slots against
@@ -359,6 +386,11 @@ def evaluate_contract_vs_statute_slots(
                 enforceability = EnforceabilityVerdict.ENFORCEABLE.value
                 explanation = f"Contract interest rate ({contract_interest}%) conforms to constitutional usury ceiling ({stat_max_apr}%)."
 
+    controlling_precedents: List[Dict[str, Any]] = []
+    if include_precedents:
+        precedent_query = raw_content or f"{topic_norm} {statute_info['citation']}"
+        controlling_precedents = resolve_controlling_precedents(topic_norm, query_text=precedent_query, limit=2)
+
     return ComplianceFinding(
         topic=topic_norm,
         alignment=alignment,
@@ -366,6 +398,7 @@ def evaluate_contract_vs_statute_slots(
         coverage="partial",
         contract_clause=contract_clause_info,
         controlling_statute=statute_info,
+        controlling_precedents=controlling_precedents,
         explanation=explanation,
         trace_id=trace_id
     )

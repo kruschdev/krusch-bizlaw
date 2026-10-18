@@ -172,7 +172,8 @@ def evaluate_compliance(
             as_of=as_of,
             contract_slots=contract_slots,
             contract_clause_info=clause_info,
-            property_type=req.property_type or "residential"
+            property_type=req.property_type or "residential",
+            include_precedents=bool(getattr(req, "include_precedents", False))
         )
         findings.append(finding)
 
@@ -190,6 +191,7 @@ def evaluate_single_clause(
     as_of_date: str,
     clause_text: str,
     property_type: str = "residential",
+    include_precedents: bool = False,
     _auth: Optional[str] = Depends(verify_api_key)
 ) -> ComplianceFinding:
     """Evaluate an arbitrary clause string directly against statutory mandates."""
@@ -218,5 +220,6 @@ def evaluate_single_clause(
         topic=topic,
         as_of=as_of,
         contract_clause_info=clause_info,
-        property_type=property_type
+        property_type=property_type,
+        include_precedents=include_precedents
     )

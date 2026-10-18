@@ -46,6 +46,7 @@ class ContractVsStatuteRequest(BaseModel):
     property_type: Optional[str] = Field("residential", description="Property category: 'residential' or 'commercial'")
     contract_slots: Optional[Dict[str, Any]] = Field(None, description="Optional direct slot dictionary for standalone evaluation")
     contract_clause_text: Optional[str] = Field(None, description="Optional raw contract clause text for standalone analysis")
+    include_precedents: bool = Field(False, description="Whether to query KruschNexus Legal Authority Cartridge for controlling case law")
 
 
 class ComplianceFinding(BaseModel):
@@ -55,6 +56,10 @@ class ComplianceFinding(BaseModel):
     coverage: str = "partial"         # Invariant: Mark every finding coverage: partial unless verified complete
     contract_clause: Optional[Dict[str, Any]] = None
     controlling_statute: Optional[Dict[str, Any]] = None
+    controlling_precedents: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Controlling judicial precedents from KruschNexus Legal Authority Cartridge"
+    )
     explanation: str
     trace_id: str
 

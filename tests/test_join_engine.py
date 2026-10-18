@@ -132,3 +132,21 @@ def test_portfolio_synthesis():
     assert resp.summary["non_compliant"] == 1
     assert resp.summary["compliant"] == 1
     assert resp.summary["total_evaluated"] == 2
+
+
+def test_controlling_precedents_retrieval():
+    """Verify that include_precedents=True populates controlling_precedents list."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="SECURITY_DEPOSIT",
+        as_of=date(2024, 8, 1),
+        contract_slots={"deposit_cap_months": 2.0},
+        property_type="residential",
+        include_precedents=True
+    )
+    assert finding.alignment == AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+    assert isinstance(finding.controlling_precedents, list)
+    if finding.controlling_precedents:
+        p = finding.controlling_precedents[0]
+        assert "citation" in p
+        assert "score" in p
+

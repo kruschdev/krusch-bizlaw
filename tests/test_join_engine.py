@@ -251,3 +251,67 @@ def test_employee_expense_reimbursement_compliant():
     assert finding.enforceability == EnforceabilityVerdict.ENFORCEABLE.value
 
 
+def test_invention_assignment_broad_void():
+    """Demanding all inventions developed on employee's own time is void under LC § 2870."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="INVENTION_ASSIGNMENT",
+        as_of=date(2024, 8, 1),
+        contract_slots={"assigns_all_inventions": True},
+        raw_content="Employee assigns all inventions whether or not conceived on employee's own time or outside working hours."
+    )
+    assert finding.alignment == AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+    assert finding.enforceability == EnforceabilityVerdict.VOID_AS_AGAINST_PUBLIC_POLICY.value
+    assert "2870" in finding.controlling_statute["citation"]
+
+
+def test_invention_assignment_with_carveout_compliant():
+    """Invention assignment with express § 2870 statutory notice is enforceable."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="INVENTION_ASSIGNMENT",
+        as_of=date(2024, 8, 1),
+        contract_slots={"assigns_all_inventions": False},
+        raw_content="Inventions are assigned subject to the statutory exclusions of California Labor Code Section 2870."
+    )
+    assert finding.alignment == AlignmentVerdict.ALIGNED.value
+    assert finding.enforceability == EnforceabilityVerdict.ENFORCEABLE.value
+
+
+def test_consumer_privacy_waiver_void():
+    """Waiver of CCPA/CPRA consumer deletion rights is void under CC § 1798.192."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="CONSUMER_PRIVACY_WAIVER",
+        as_of=date(2024, 8, 1),
+        contract_slots={"waives_privacy_rights": True},
+        raw_content="Consumer agrees to waive all statutory privacy rights and has no right to delete personal information."
+    )
+    assert finding.alignment == AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+    assert finding.enforceability == EnforceabilityVerdict.VOID_AS_AGAINST_PUBLIC_POLICY.value
+    assert "1798.192" in finding.controlling_statute["citation"]
+
+
+def test_automatic_renewal_call_to_cancel_void():
+    """Requiring phone call or certified mail to cancel is void under ARL (BPC § 17602)."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="AUTOMATIC_RENEWAL",
+        as_of=date(2024, 8, 1),
+        contract_slots={"no_online_cancellation": True},
+        raw_content="Subscription auto-renews monthly; subscriber must call to cancel during business hours with no online cancellation."
+    )
+    assert finding.alignment == AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+    assert finding.enforceability == EnforceabilityVerdict.VOID_AS_AGAINST_PUBLIC_POLICY.value
+    assert "17602" in finding.controlling_statute["citation"]
+
+
+def test_automatic_renewal_online_cancel_compliant():
+    """Subscription with affirmative consent and exclusive online cancellation is compliant."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="AUTOMATIC_RENEWAL",
+        as_of=date(2024, 8, 1),
+        contract_slots={"no_online_cancellation": False},
+        raw_content="Subscriber may cancel the monthly continuous service subscription online at any time via account settings."
+    )
+    assert finding.alignment == AlignmentVerdict.ALIGNED.value
+    assert finding.enforceability == EnforceabilityVerdict.ENFORCEABLE.value
+
+
+

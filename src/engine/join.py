@@ -486,6 +486,92 @@ def evaluate_contract_vs_statute_slots(
             enforceability = EnforceabilityVerdict.ENFORCEABLE.value
             explanation = f"Contract expense terms conform to statutory indemnification mandates under {statute_info['citation']}."
 
+    # 12. EMPLOYEE INVENTION ASSIGNMENT EXCLUSIONS (LC § 2870 & § 2872)
+    elif topic_norm == "INVENTION_ASSIGNMENT":
+        assigns_exempt_inventions = (
+            contract_slots.get("assigns_all_inventions")
+            or contract_slots.get("assigns_own_time_inventions")
+            or contract_slots.get("no_carveout_for_2870")
+        )
+        if assigns_exempt_inventions is None and raw_content:
+            assigns_exempt_inventions = bool(
+                re.search(
+                    r"\b(?:all\s+inventions\s+whether\s+or\s+not|on\s+employee'?s\s+own\s+time|outside\s+working\s+hours|assigns?\s+all\s+(?:prior\s+)?inventions?)\b",
+                    raw_content,
+                    re.IGNORECASE,
+                )
+            ) and not bool(re.search(r"\b2870\b", raw_content))
+
+        if assigns_exempt_inventions:
+            alignment = AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+            enforceability = EnforceabilityVerdict.VOID_AS_AGAINST_PUBLIC_POLICY.value
+            explanation = (
+                f"Broad invention assignment clause purporting to claim employee inventions developed on own time "
+                f"without company assets is void as contrary to public policy under {statute_info['citation']}."
+            )
+        else:
+            alignment = AlignmentVerdict.ALIGNED.value
+            enforceability = EnforceabilityVerdict.ENFORCEABLE.value
+            explanation = f"Invention assignment terms include statutory Labor Code § 2870 carve-outs and conform to {statute_info['citation']}."
+
+    # 13. CONSUMER PRIVACY & STATUTORY REMEDY WAIVERS (CC § 1798.192 & § 1751)
+    elif topic_norm == "CONSUMER_PRIVACY_WAIVER":
+        waives_consumer_rights = (
+            contract_slots.get("waives_privacy_rights")
+            or contract_slots.get("waives_deletion_rights")
+            or contract_slots.get("waives_clra_remedies")
+            or contract_slots.get("waives_public_injunctive_relief")
+        )
+        if waives_consumer_rights is None and raw_content:
+            waives_consumer_rights = bool(
+                re.search(
+                    r"\b(?:waives?\s+(?:all\s+)?(?:privacy|ccpa|cpra|clra)|disclaims?\s+(?:all\s+)?consumer\s+rights|waives?\s+public\s+injunctive\s+relief|no\s+right\s+to\s+delete)\b",
+                    raw_content,
+                    re.IGNORECASE,
+                )
+            )
+
+        if waives_consumer_rights:
+            alignment = AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+            enforceability = EnforceabilityVerdict.VOID_AS_AGAINST_PUBLIC_POLICY.value
+            explanation = (
+                f"Contract provision purporting to waive or limit consumer statutory rights, deletion remedies, "
+                f"or public injunctive relief is strictly void under {statute_info['citation']}."
+            )
+        else:
+            alignment = AlignmentVerdict.ALIGNED.value
+            enforceability = EnforceabilityVerdict.ENFORCEABLE.value
+            explanation = f"Consumer privacy terms preserve non-waivable statutory rights under {statute_info['citation']}."
+
+    # 14. AUTOMATIC RENEWAL TERMS & CANCELLATION (BPC § 17602)
+    elif topic_norm == "AUTOMATIC_RENEWAL":
+        obstructs_cancellation = (
+            contract_slots.get("obstructs_cancellation")
+            or contract_slots.get("no_online_cancellation")
+            or contract_slots.get("fails_clear_conspicuous")
+        )
+        if obstructs_cancellation is None and raw_content:
+            obstructs_cancellation = bool(
+                re.search(
+                    r"\b(?:must\s+call\s+to\s+cancel|cancellation\s+only\s+by\s+(?:phone|mail|certified\s+letter)|no\s+online\s+cancellation|cancellation\s+fee)\b",
+                    raw_content,
+                    re.IGNORECASE,
+                )
+            )
+
+        if obstructs_cancellation:
+            alignment = AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+            enforceability = EnforceabilityVerdict.VOID_AS_AGAINST_PUBLIC_POLICY.value
+            explanation = (
+                f"Contract automatic renewal terms failing to provide exclusive online cancellation or clear notice "
+                f"violate California Automatic Renewal Law under {statute_info['citation']}."
+            )
+        else:
+            alignment = AlignmentVerdict.ALIGNED.value
+            enforceability = EnforceabilityVerdict.ENFORCEABLE.value
+            explanation = f"Subscription terms comply with statutory affirmative consent and online cancellation requirements under {statute_info['citation']}."
+
+
     controlling_precedents: List[Dict[str, Any]] = []
     if include_precedents:
         precedent_query = raw_content or f"{topic_norm} {statute_info['citation']}"

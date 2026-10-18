@@ -24,6 +24,9 @@ def test_mandates_presence():
         "EXCULPATORY_CLAUSE",
         "ATTORNEY_FEE_RECIPROCITY",
         "EXPENSE_REIMBURSEMENT",
+        "INVENTION_ASSIGNMENT",
+        "CONSUMER_PRIVACY_WAIVER",
+        "AUTOMATIC_RENEWAL",
     ]
     for key in expected_keys:
         assert key in STATUTORY_MANDATES
@@ -39,6 +42,9 @@ def test_topic_normalization():
     assert normalize_topic("liability_waiver") == "EXCULPATORY_CLAUSE"
     assert normalize_topic("attorney_fees") == "ATTORNEY_FEE_RECIPROCITY"
     assert normalize_topic("expenses") == "EXPENSE_REIMBURSEMENT"
+    assert normalize_topic("employee_inventions") == "INVENTION_ASSIGNMENT"
+    assert normalize_topic("ccpa_waiver") == "CONSUMER_PRIVACY_WAIVER"
+    assert normalize_topic("subscription_renewal") == "AUTOMATIC_RENEWAL"
 
 
 def test_ab12_temporal_split():
@@ -75,4 +81,17 @@ def test_new_mandates_resolution():
     er = resolve_statutory_mandate("EXPENSE_REIMBURSEMENT", date(2024, 8, 1))
     assert er["citation"] == "Cal. Lab. Code § 2802"
     assert er["normalized_slot"]["indemnification_mandatory"] is True
+
+    ia = resolve_statutory_mandate("INVENTION_ASSIGNMENT", date(2024, 8, 1))
+    assert ia["citation"] == "Cal. Lab. Code § 2870"
+    assert ia["normalized_slot"]["own_time_inventions_exempt"] is True
+
+    pw = resolve_statutory_mandate("CONSUMER_PRIVACY_WAIVER", date(2024, 8, 1))
+    assert "1798.192" in pw["citation"]
+    assert pw["non_waivable"] is True
+
+    ar = resolve_statutory_mandate("AUTOMATIC_RENEWAL", date(2024, 8, 1))
+    assert "17602" in ar["citation"]
+    assert ar["normalized_slot"]["exclusive_online_cancellation_required"] is True
+
 

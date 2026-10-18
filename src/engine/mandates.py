@@ -123,6 +123,30 @@ STATUTORY_MANDATES: dict[str, dict[str, Any]] = {
         "unit": "mandatory_indemnification",
         "statutory_text": "An employer shall indemnify an employee for all necessary expenditures or losses incurred in direct consequence of discharge of duties. Any waiver is null and void under § 2804.",
         "non_waivable": True,
+    },
+    "INVENTION_ASSIGNMENT": {
+        "citation": "Cal. Lab. Code § 2870",
+        "mandate_type": "STATUTORY_PROHIBITION",
+        "slot_key": "broad_invention_assignment",
+        "unit": "prohibited_assignment",
+        "statutory_text": "Employment provisions requiring assignment of inventions developed on employee's own time without employer equipment or trade secrets are void as contrary to public policy (§ 2870/§ 2872).",
+        "non_waivable": True,
+    },
+    "CONSUMER_PRIVACY_WAIVER": {
+        "citation": "Cal. Civ. Code § 1798.192 & § 1751",
+        "mandate_type": "STATUTORY_PROHIBITION",
+        "slot_key": "consumer_statutory_waiver",
+        "unit": "prohibited_waiver",
+        "statutory_text": "Any contractual waiver or limitation of consumer rights, remedies, or public injunctive relief under CCPA/CPRA or CLRA is strictly void as against public policy.",
+        "non_waivable": True,
+    },
+    "AUTOMATIC_RENEWAL": {
+        "citation": "Cal. Bus. & Prof. Code § 17602",
+        "mandate_type": "STATUTORY_MANDATE",
+        "slot_key": "automatic_renewal_terms",
+        "unit": "mandatory_cancellation_mechanism",
+        "statutory_text": "Automatic renewal terms must be presented in a clear and conspicuous manner, with affirmative consent and exclusive online cancellation required.",
+        "non_waivable": True,
     }
 }
 
@@ -142,6 +166,14 @@ TOPIC_ALIASES: dict[str, str] = {
     "FEE_SHIFTING": "ATTORNEY_FEE_RECIPROCITY",
     "EXPENSES": "EXPENSE_REIMBURSEMENT",
     "REMOTE_WORK_EXPENSES": "EXPENSE_REIMBURSEMENT",
+    "EMPLOYEE_INVENTIONS": "INVENTION_ASSIGNMENT",
+    "INVENTIONS": "INVENTION_ASSIGNMENT",
+    "PATENT_ASSIGNMENT": "INVENTION_ASSIGNMENT",
+    "CCPA_WAIVER": "CONSUMER_PRIVACY_WAIVER",
+    "PRIVACY_WAIVER": "CONSUMER_PRIVACY_WAIVER",
+    "CLRA_WAIVER": "CONSUMER_PRIVACY_WAIVER",
+    "SUBSCRIPTION_RENEWAL": "AUTOMATIC_RENEWAL",
+    "AUTO_RENEW": "AUTOMATIC_RENEWAL",
 }
 
 
@@ -238,6 +270,24 @@ def resolve_statutory_mandate(
         result["normalized_slot"] = {
             "indemnification_mandatory": True,
             "waiver_void_under_2804": True
+        }
+
+    elif topic_norm == "INVENTION_ASSIGNMENT":
+        result["normalized_slot"] = {
+            "own_time_inventions_exempt": True,
+            "statute_voids_broad_assignment": True
+        }
+
+    elif topic_norm == "CONSUMER_PRIVACY_WAIVER":
+        result["normalized_slot"] = {
+            "statutory_waiver_prohibited": True,
+            "remedies_non_waivable": True
+        }
+
+    elif topic_norm == "AUTOMATIC_RENEWAL":
+        result["normalized_slot"] = {
+            "clear_conspicuous_mandatory": True,
+            "exclusive_online_cancellation_required": True
         }
 
     return result

@@ -164,9 +164,60 @@ def main():
     print(f"  -> Enforceability:      {f8.enforceability}")
     print(f"  -> Legal Explanation:   {f8.explanation}")
 
+    # Step 9: Employee Invention Assignment Exclusions (LC § 2870)
+    print("\n" + "=" * 78)
+    print("Step 9: Employee Invention Assignment Exclusions (Labor Code § 2870)")
+    print("-" * 78)
+    f9 = evaluate_contract_vs_statute_slots(
+        topic="INVENTION_ASSIGNMENT",
+        as_of=date(2024, 8, 1),
+        contract_slots={"assigns_all_inventions": True},
+        raw_content="Employee assigns all inventions whether or not conceived on employee's own time or outside working hours."
+    )
+    print("  [Contract Term: Employee assigns all inventions conceived on own time]")
+    print(f"  -> Controlling Statute:  {f9.controlling_statute['citation']}")
+    print(f"  -> Mandate Type:        {f9.controlling_statute['mandate_type']}")
+    print(f"  -> Alignment Verdict:   {f9.alignment.upper()}")
+    print(f"  -> Enforceability:      {f9.enforceability}")
+    print(f"  -> Legal Explanation:   {f9.explanation}")
+
+    # Step 10: Consumer Privacy Statutory Rights Waiver (CC § 1798.192 & § 1751)
+    print("\n" + "=" * 78)
+    print("Step 10: Consumer Privacy Statutory Rights Waiver (CCPA § 1798.192 / CLRA § 1751)")
+    print("-" * 78)
+    f10 = evaluate_contract_vs_statute_slots(
+        topic="CONSUMER_PRIVACY_WAIVER",
+        as_of=date(2024, 8, 1),
+        contract_slots={"waives_privacy_rights": True},
+        raw_content="Consumer agrees to waive all statutory privacy rights and has no right to delete personal information."
+    )
+    print("  [Contract Term: Consumer waives all statutory privacy and deletion rights]")
+    print(f"  -> Controlling Statute:  {f10.controlling_statute['citation']}")
+    print(f"  -> Mandate Type:        {f10.controlling_statute['mandate_type']}")
+    print(f"  -> Alignment Verdict:   {f10.alignment.upper()}")
+    print(f"  -> Enforceability:      {f10.enforceability}")
+    print(f"  -> Legal Explanation:   {f10.explanation}")
+
+    # Step 11: Automatic Renewal "Call-to-Cancel" Dark Pattern (BPC § 17602)
+    print("\n" + "=" * 78)
+    print("Step 11: Automatic Renewal 'Call-to-Cancel' Dark Pattern (ARL / BPC § 17602)")
+    print("-" * 78)
+    f11 = evaluate_contract_vs_statute_slots(
+        topic="AUTOMATIC_RENEWAL",
+        as_of=date(2024, 8, 1),
+        contract_slots={"no_online_cancellation": True},
+        raw_content="Subscription auto-renews monthly; subscriber must call to cancel with no online cancellation."
+    )
+    print("  [Contract Term: Subscriber must call to cancel with no online cancellation]")
+    print(f"  -> Controlling Statute:  {f11.controlling_statute['citation']}")
+    print(f"  -> Mandate Type:        {f11.controlling_statute['mandate_type']}")
+    print(f"  -> Alignment Verdict:   {f11.alignment.upper()}")
+    print(f"  -> Enforceability:      {f11.enforceability}")
+    print(f"  -> Legal Explanation:   {f11.explanation}")
+
     # Portfolio Summary
     portfolio = synthesize_portfolio_response(
-        findings=[f1, f2, f3, f4, f5, f6, f7, f8],
+        findings=[f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11],
         as_of_date="2024-08-01",
         jurisdiction="CA:Oakland",
         counterparty="Sovereign Holdings LLC"
@@ -174,7 +225,7 @@ def main():
 
     elapsed = time.perf_counter() - t0
     print("\n" + "=" * 78)
-    print(f"  DEMO COMPLETE: All 8 cross-domain join checks executed in {elapsed:.3f}s")
+    print(f"  DEMO COMPLETE: All 11 cross-domain join checks executed in {elapsed:.3f}s")
     print(f"  Portfolio Verdict: {portfolio.verdict}")
     print(f"  Summary: {portfolio.summary}")
     print("  Status: 100% Deterministic Air-Gapped Precision Verified")

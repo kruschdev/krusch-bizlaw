@@ -215,9 +215,60 @@ def main():
     print(f"  -> Enforceability:      {f11.enforceability}")
     print(f"  -> Legal Explanation:   {f11.explanation}")
 
+    # Step 12: Corporate Books & Records Inspection Waiver (Corp. Code §§ 1601-1602)
+    print("\n" + "=" * 78)
+    print("Step 12: Corporate Books & Records Inspection Waiver (Corp. Code §§ 1601-1602)")
+    print("-" * 78)
+    f12 = evaluate_contract_vs_statute_slots(
+        topic="SHAREHOLDER_INSPECTION_WAIVER",
+        as_of=date(2024, 8, 1),
+        contract_slots={"waives_inspection_rights": True},
+        raw_content="Minority shareholders hereby waive all statutory inspection rights under Section 1601."
+    )
+    print("  [Bylaw Term: Minority shareholders waive statutory inspection rights]")
+    print(f"  -> Controlling Statute:  {f12.controlling_statute['citation']}")
+    print(f"  -> Mandate Type:        {f12.controlling_statute['mandate_type']}")
+    print(f"  -> Alignment Verdict:   {f12.alignment.upper()}")
+    print(f"  -> Enforceability:      {f12.enforceability}")
+    print(f"  -> Legal Explanation:   {f12.explanation}")
+
+    # Step 13: LLC Fiduciary Duty of Loyalty Elimination (RULLCA Corp. Code § 17701.10(c))
+    print("\n" + "=" * 78)
+    print("Step 13: LLC Fiduciary Duty of Loyalty Elimination (RULLCA § 17701.10(c))")
+    print("-" * 78)
+    f13 = evaluate_contract_vs_statute_slots(
+        topic="LLC_DUTY_OF_LOYALTY_ELIMINATION",
+        as_of=date(2024, 8, 1),
+        contract_slots={"eliminates_fiduciary_loyalty": True},
+        raw_content="Managing Member shall have no fiduciary duty of loyalty and all fiduciary duties are eliminated."
+    )
+    print("  [Operating Agreement Term: Managing Member has no fiduciary duty of loyalty]")
+    print(f"  -> Controlling Statute:  {f13.controlling_statute['citation']}")
+    print(f"  -> Mandate Type:        {f13.controlling_statute['mandate_type']}")
+    print(f"  -> Alignment Verdict:   {f13.alignment.upper()}")
+    print(f"  -> Enforceability:      {f13.enforceability}")
+    print(f"  -> Legal Explanation:   {f13.explanation}")
+
+    # Step 14: Government Tort Claim Presentation Deadline (Gov. Code § 911.2 / Bodde)
+    print("\n" + "=" * 78)
+    print("Step 14: Government Tort Claim Presentation Deadline (Gov. Code § 911.2 / Bodde)")
+    print("-" * 78)
+    f14 = evaluate_contract_vs_statute_slots(
+        topic="GOVERNMENT_CLAIM_PRESENTATION",
+        as_of=date(2024, 8, 1),
+        contract_slots={"gov_claim_presentation_months": 9.0},
+        raw_content="Written tort claim for personal injury presented 9 months after accrual."
+    )
+    print("  [Tort Claim Presentation: 9 months after accrual (Mandatory Ceiling: 6 months)]")
+    print(f"  -> Controlling Statute:  {f14.controlling_statute['citation']}")
+    print(f"  -> Mandate Type:        {f14.controlling_statute['mandate_type']}")
+    print(f"  -> Alignment Verdict:   {f14.alignment.upper()}")
+    print(f"  -> Enforceability:      {f14.enforceability}")
+    print(f"  -> Legal Explanation:   {f14.explanation}")
+
     # Portfolio Summary
     portfolio = synthesize_portfolio_response(
-        findings=[f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11],
+        findings=[f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14],
         as_of_date="2024-08-01",
         jurisdiction="CA:Oakland",
         counterparty="Sovereign Holdings LLC"
@@ -225,7 +276,7 @@ def main():
 
     elapsed = time.perf_counter() - t0
     print("\n" + "=" * 78)
-    print(f"  DEMO COMPLETE: All 11 cross-domain join checks executed in {elapsed:.3f}s")
+    print(f"  DEMO COMPLETE: All 14 cross-domain join checks executed in {elapsed:.3f}s")
     print(f"  Portfolio Verdict: {portfolio.verdict}")
     print(f"  Summary: {portfolio.summary}")
     print("  Status: 100% Deterministic Air-Gapped Precision Verified")
@@ -234,3 +285,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

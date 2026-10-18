@@ -314,4 +314,79 @@ def test_automatic_renewal_online_cancel_compliant():
     assert finding.enforceability == EnforceabilityVerdict.ENFORCEABLE.value
 
 
+def test_shareholder_inspection_waiver_void():
+    """Bylaw or shareholder agreement waiving Corp. Code §§ 1600-1602 inspection rights is void."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="SHAREHOLDER_INSPECTION_WAIVER",
+        as_of=date(2024, 8, 1),
+        contract_slots={"waives_inspection_rights": True},
+        raw_content="Minority shareholders hereby waive all statutory inspection rights and have no right to inspect accounting books."
+    )
+    assert finding.alignment == AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+    assert finding.enforceability == EnforceabilityVerdict.VOID_AS_AGAINST_PUBLIC_POLICY.value
+    assert "1601" in finding.controlling_statute["citation"]
+
+
+def test_shareholder_inspection_preserved_compliant():
+    """Corporate bylaws preserving statutory inspection rights are enforceable."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="SHAREHOLDER_INSPECTION_WAIVER",
+        as_of=date(2024, 8, 1),
+        contract_slots={"waives_inspection_rights": False},
+        raw_content="Shareholders and directors may inspect accounting books and corporate minutes upon written demand under Corp. Code §§ 1601-1602."
+    )
+    assert finding.alignment == AlignmentVerdict.ALIGNED.value
+    assert finding.enforceability == EnforceabilityVerdict.ENFORCEABLE.value
+
+
+def test_llc_duty_of_loyalty_elimination_void():
+    """LLC operating agreement eliminating fiduciary duty of loyalty is void under RULLCA § 17701.10(c)."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="LLC_DUTY_OF_LOYALTY_ELIMINATION",
+        as_of=date(2024, 8, 1),
+        contract_slots={"eliminates_fiduciary_loyalty": True},
+        raw_content="The Managing Member shall have no fiduciary duty of loyalty and all fiduciary duties are hereby eliminated."
+    )
+    assert finding.alignment == AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+    assert finding.enforceability == EnforceabilityVerdict.VOID_AS_AGAINST_PUBLIC_POLICY.value
+    assert "17701.10" in finding.controlling_statute["citation"]
+
+
+def test_llc_duty_of_loyalty_compliant():
+    """LLC operating agreement identifying specific non-manifestly-unreasonable activities is compliant."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="LLC_DUTY_OF_LOYALTY_ELIMINATION",
+        as_of=date(2024, 8, 1),
+        contract_slots={"eliminates_fiduciary_loyalty": False},
+        raw_content="Managers remain bound by the fiduciary duty of loyalty and good faith under Corp. Code § 17704.09."
+    )
+    assert finding.alignment == AlignmentVerdict.ALIGNED.value
+    assert finding.enforceability == EnforceabilityVerdict.ENFORCEABLE.value
+
+
+def test_government_claim_presentation_late_barred():
+    """Personal injury tort claim presented at 9 months exceeds 6-month Gov. Code § 911.2 deadline."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="GOVERNMENT_CLAIM_PRESENTATION",
+        as_of=date(2024, 8, 1),
+        contract_slots={"gov_claim_presentation_months": 9.0},
+        raw_content="Claimant presented written tort claim for personal injury against the municipal transit agency 9 months after accrual."
+    )
+    assert finding.alignment == AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+    assert finding.enforceability == EnforceabilityVerdict.VOID_AS_AGAINST_PUBLIC_POLICY.value
+    assert "911.2" in finding.controlling_statute["citation"]
+
+
+def test_government_claim_presentation_timely_compliant():
+    """Personal injury tort claim presented within 6 months complies with Gov. Code § 911.2."""
+    finding = evaluate_contract_vs_statute_slots(
+        topic="GOVERNMENT_CLAIM_PRESENTATION",
+        as_of=date(2024, 8, 1),
+        contract_slots={"gov_claim_presentation_months": 4.0},
+        raw_content="Claimant presented written tort claim to the public entity 4 months after the accident."
+    )
+    assert finding.alignment == AlignmentVerdict.ALIGNED.value
+    assert finding.enforceability == EnforceabilityVerdict.ENFORCEABLE.value
+
+
 

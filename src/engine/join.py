@@ -571,6 +571,83 @@ def evaluate_contract_vs_statute_slots(
             enforceability = EnforceabilityVerdict.ENFORCEABLE.value
             explanation = f"Subscription terms comply with statutory affirmative consent and online cancellation requirements under {statute_info['citation']}."
 
+    # 15. SHAREHOLDER_INSPECTION_WAIVER (Cal. Corp. Code § 1601 & § 1602)
+    elif topic_norm == "SHAREHOLDER_INSPECTION_WAIVER":
+        waives_inspection = (
+            contract_slots.get("waives_inspection_rights")
+            or contract_slots.get("limits_books_and_records_inspection")
+        )
+        if waives_inspection is None and raw_content:
+            waives_inspection = bool(
+                re.search(
+                    r"\b(?:waive[sd]?\s+(?:all\s+)?(?:statutory\s+)?inspection\s+rights|no\s+right\s+to\s+inspect\s+accounting\s+books|limit[sd]?\s+(?:director|shareholder)\s+inspection\s+under\s+Section\s+160[012])\b",
+                    raw_content,
+                    re.IGNORECASE,
+                )
+            )
+
+        if waives_inspection:
+            alignment = AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+            enforceability = EnforceabilityVerdict.VOID_AS_AGAINST_PUBLIC_POLICY.value
+            explanation = (
+                f"Bylaw or shareholder agreement provision waiving or limiting accounting books and records "
+                f"inspection rights is void under {statute_info['citation']}."
+            )
+        else:
+            alignment = AlignmentVerdict.ALIGNED.value
+            enforceability = EnforceabilityVerdict.ENFORCEABLE.value
+            explanation = f"Corporate governance terms preserve non-waivable statutory inspection rights under {statute_info['citation']}."
+
+    # 16. LLC_DUTY_OF_LOYALTY_ELIMINATION (Cal. Corp. Code § 17701.10(c))
+    elif topic_norm == "LLC_DUTY_OF_LOYALTY_ELIMINATION":
+        eliminates_loyalty = (
+            contract_slots.get("eliminates_fiduciary_loyalty")
+            or contract_slots.get("waives_duty_of_loyalty")
+            or contract_slots.get("eliminates_good_faith")
+        )
+        if eliminates_loyalty is None and raw_content:
+            eliminates_loyalty = bool(
+                re.search(
+                    r"\b(?:eliminate[sd]?\s+(?:all\s+)?fiduciary\s+dut(?:y|ies)|no\s+fiduciary\s+duty\s+of\s+loyalty|waive[sd]?\s+the\s+duty\s+of\s+loyalty\s+and\s+good\s+faith)\b",
+                    raw_content,
+                    re.IGNORECASE,
+                )
+            )
+
+        if eliminates_loyalty:
+            alignment = AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+            enforceability = EnforceabilityVerdict.VOID_AS_AGAINST_PUBLIC_POLICY.value
+            explanation = (
+                f"Operating agreement provision purporting to eliminate the fiduciary duty of loyalty or "
+                f"good faith and fair dealing is void under RULLCA ({statute_info['citation']})."
+            )
+        else:
+            alignment = AlignmentVerdict.ALIGNED.value
+            enforceability = EnforceabilityVerdict.ENFORCEABLE.value
+            explanation = f"LLC operating agreement fiduciary specifications comply with RULLCA boundaries under {statute_info['citation']}."
+
+    # 17. GOVERNMENT_CLAIM_PRESENTATION (Cal. Gov. Code § 911.2)
+    elif topic_norm == "GOVERNMENT_CLAIM_PRESENTATION":
+        claim_months = contract_slots.get("gov_claim_presentation_months") or contract_slots.get("claim_months")
+        if claim_months is None and raw_content:
+            claim_months = _extract_numeric_from_text(
+                raw_content,
+                [r"(\d+(?:\.\d+)?)\s*months?"],
+                r"\b(one|two|three|four|five|six|seven|eight|nine|ten|twelve)\s+months?\b"
+            )
+
+        max_months = float(statute_info.get("normalized_slot", {}).get("max_claim_months", 6.0))
+        if claim_months is not None and float(claim_months) > max_months:
+            alignment = AlignmentVerdict.CONTRACT_LESS_THAN_MANDATORY.value
+            enforceability = EnforceabilityVerdict.VOID_AS_AGAINST_PUBLIC_POLICY.value
+            explanation = (
+                f"Claim presentation at {float(claim_months):g} months exceeds the mandatory {max_months:g}-month "
+                f"statutory deadline for personal injury/property tort claims under {statute_info['citation']} (State v. Superior Court (Bodde))."
+            )
+        else:
+            alignment = AlignmentVerdict.ALIGNED.value
+            enforceability = EnforceabilityVerdict.ENFORCEABLE.value
+            explanation = f"Government tort claim presentation within {max_months:g} months satisfies {statute_info['citation']}."
 
     controlling_precedents: List[Dict[str, Any]] = []
     if include_precedents:

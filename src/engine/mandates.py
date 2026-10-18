@@ -147,6 +147,31 @@ STATUTORY_MANDATES: dict[str, dict[str, Any]] = {
         "unit": "mandatory_cancellation_mechanism",
         "statutory_text": "Automatic renewal terms must be presented in a clear and conspicuous manner, with affirmative consent and exclusive online cancellation required.",
         "non_waivable": True,
+    },
+    "SHAREHOLDER_INSPECTION_WAIVER": {
+        "citation": "Cal. Corp. Code § 1601 & § 1602",
+        "mandate_type": "STATUTORY_PROHIBITION",
+        "slot_key": "waives_inspection_rights",
+        "unit": "prohibited_waiver",
+        "statutory_text": "The rights of shareholders and directors to inspect accounting books, records, and minutes under Sections 1600-1602 may not be limited by the articles or bylaws.",
+        "non_waivable": True,
+    },
+    "LLC_DUTY_OF_LOYALTY_ELIMINATION": {
+        "citation": "Cal. Corp. Code § 17701.10(c)",
+        "mandate_type": "STATUTORY_PROHIBITION",
+        "slot_key": "eliminates_fiduciary_loyalty",
+        "unit": "prohibited_elimination",
+        "statutory_text": "An LLC operating agreement shall not eliminate the fiduciary duty of loyalty, the duty of care, or the contractual obligation of good faith and fair dealing (RULLCA § 17701.10(c)).",
+        "non_waivable": True,
+    },
+    "GOVERNMENT_CLAIM_PRESENTATION": {
+        "citation": "Cal. Gov. Code § 911.2",
+        "mandate_type": "STATUTORY_CEILING",
+        "max_claim_months": 6.0,
+        "slot_key": "gov_claim_presentation_months",
+        "unit": "months",
+        "statutory_text": "A claim relating to a cause of action for death or for injury to person or personal property against a public entity shall be presented not later than six months after accrual.",
+        "non_waivable": True,
     }
 }
 
@@ -174,6 +199,11 @@ TOPIC_ALIASES: dict[str, str] = {
     "CLRA_WAIVER": "CONSUMER_PRIVACY_WAIVER",
     "SUBSCRIPTION_RENEWAL": "AUTOMATIC_RENEWAL",
     "AUTO_RENEW": "AUTOMATIC_RENEWAL",
+    "INSPECTION_RIGHTS": "SHAREHOLDER_INSPECTION_WAIVER",
+    "BOOKS_AND_RECORDS": "SHAREHOLDER_INSPECTION_WAIVER",
+    "LLC_FIDUCIARY_DUTY": "LLC_DUTY_OF_LOYALTY_ELIMINATION",
+    "RULLCA_LOYALTY": "LLC_DUTY_OF_LOYALTY_ELIMINATION",
+    "GOV_TORT_CLAIM": "GOVERNMENT_CLAIM_PRESENTATION",
 }
 
 
@@ -288,6 +318,23 @@ def resolve_statutory_mandate(
         result["normalized_slot"] = {
             "clear_conspicuous_mandatory": True,
             "exclusive_online_cancellation_required": True
+        }
+
+    elif topic_norm == "SHAREHOLDER_INSPECTION_WAIVER":
+        result["normalized_slot"] = {
+            "inspection_waiver_prohibited": True,
+            "bylaw_limitation_void": True
+        }
+
+    elif topic_norm == "LLC_DUTY_OF_LOYALTY_ELIMINATION":
+        result["normalized_slot"] = {
+            "fiduciary_loyalty_elimination_prohibited": True,
+            "good_faith_elimination_prohibited": True
+        }
+
+    elif topic_norm == "GOVERNMENT_CLAIM_PRESENTATION":
+        result["normalized_slot"] = {
+            "max_claim_months": mandate["max_claim_months"]
         }
 
     return result

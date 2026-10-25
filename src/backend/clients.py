@@ -16,10 +16,25 @@ import httpx
 
 from .config import settings
 
-logger = logging.getLogger("kruschbizlaw.clients")
+logger = logging.getLogger(__name__)
 
 
-class KruschBizClient:
+class _HealthCheckMixin:
+    """Shared health-check helper for fleet service clients."""
+
+    timeout: float
+
+    def _check_health(self, base_url: str, service_name: str) -> bool:
+        try:
+            with httpx.Client(timeout=self.timeout) as client:
+                res = client.get(f"{base_url}/health")
+                return res.status_code == 200
+        except (httpx.ConnectError, httpx.TimeoutException, httpx.HTTPError, ValueError) as exc:
+            logger.warning("Health check failed for %s: %s", service_name, exc)
+            return False
+
+
+class KruschBizClient(_HealthCheckMixin):
     """Client for querying KruschBiz commercial contract engine."""
 
     def __init__(self, base_url: Optional[str] = None, timeout: Optional[float] = None):
@@ -27,12 +42,7 @@ class KruschBizClient:
         self.timeout = timeout if timeout is not None else settings.CLIENT_TIMEOUT
 
     def check_health(self) -> bool:
-        try:
-            with httpx.Client(timeout=self.timeout) as client:
-                res = client.get(f"{self.base_url}/health")
-                return res.status_code == 200
-        except Exception:
-            return False
+        return self._check_health(self.base_url, "KruschBiz")
 
     def get_controlling_clause(
         self,
@@ -59,15 +69,15 @@ class KruschBizClient:
                     data = res.json()
                     return data.get("controlling_clause")
                 logger.warning(f"KruschBiz controlling-clause returned status {res.status_code}: {res.text}")
-        except Exception as exc:
-            logger.debug(f"KruschBiz connection error: {exc}")
+        except (httpx.HTTPError, ValueError) as exc:
+            logger.warning(f"KruschBiz connection error: {exc}")
         return None
 
     # Backwards-compatible alias
     consult_controlling_clause = get_controlling_clause
 
 
-class KruschLawClient:
+class KruschLawClient(_HealthCheckMixin):
     """Client for querying KruschLaw statutory intelligence engine."""
 
     def __init__(self, base_url: Optional[str] = None, timeout: Optional[float] = None):
@@ -75,12 +85,7 @@ class KruschLawClient:
         self.timeout = timeout if timeout is not None else settings.CLIENT_TIMEOUT
 
     def check_health(self) -> bool:
-        try:
-            with httpx.Client(timeout=self.timeout) as client:
-                res = client.get(f"{self.base_url}/health")
-                return res.status_code == 200
-        except Exception:
-            return False
+        return self._check_health(self.base_url, "KruschLaw")
 
     def get_controlling_law(
         self,

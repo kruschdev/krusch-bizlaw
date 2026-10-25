@@ -91,3 +91,24 @@ class TestSecurityHardening:
         )
         with pytest.raises(RuntimeError, match="Production KruschBiz endpoint must reside strictly on loopback"):
             validate_security_invariants(s_prod)
+
+    def test_endpoint_and_cors_validation_and_loopback_warning(self, caplog):
+        """Verify Pass #6 BUG-01, BUG-02, BUG-04, BUG-05 in config.py."""
+        import logging
+
+        # BUG-01: Empty BIZ_BASE_URL or LAW_BASE_URL raises RuntimeError
+        with pytest.raises(RuntimeError, match="BIZ_BASE_URL must be configured"):
+            validate_security_invariants(Settings(BIZ_BASE_URL="   "))
+        with pytest.raises(RuntimeError, match="LAW_BASE_URL must be configured"):
+            validate_security_invariants(Settings(LAW_BASE_URL=""))
+
+        # BUG-02: cors_origins_list rejects entries without http:// or https:// scheme
+        s_bad_cors = Settings(CORS_ORIGINS="http://localhost:8507,invalid-origin-no-scheme")
+        with pytest.raises(ValueError, match="Invalid CORS origin"):
+            _ = s_bad_cors.cors_origins_list
+
+        # BUG-04: is_strict_loopback logs at WARNING level on invalid hostname
+        with caplog.at_level(logging.WARNING, logger="krusch_bizlaw.config"):
+            assert is_strict_loopback("not-an-ip.example.com") is False
+        assert any("Invalid loopback host or IP address" in rec.message for rec in caplog.records)
+

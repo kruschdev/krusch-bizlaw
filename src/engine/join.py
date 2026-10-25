@@ -8,6 +8,7 @@ and non-waivable public policy prohibitions.
 
 from __future__ import annotations
 
+import logging
 import re
 import uuid
 from datetime import date
@@ -20,6 +21,8 @@ from .models import (
     ContractVsStatuteResponse,
     EnforceabilityVerdict,
 )
+
+logger = logging.getLogger(__name__)
 
 WORD_TO_DIGIT: dict[str, float] = {
     "zero": 0.0,
@@ -87,7 +90,11 @@ def resolve_controlling_precedents(
                 "snippet": h.get("text", "")[:300]
             })
         return precedents
-    except Exception:
+    except (ImportError, OSError, RuntimeError, ValueError) as exc:
+        logger.warning("Join engine failed to retrieve precedents: %s", exc)
+        return []
+    except Exception as exc:
+        logger.exception("Unexpected error in resolve_controlling_precedents: %s", exc)
         return []
 
 

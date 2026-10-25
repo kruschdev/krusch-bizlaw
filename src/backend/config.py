@@ -8,9 +8,12 @@ Default residency: Strict loopback (127.0.0.1:8087).
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger("krusch_bizlaw.config")
 
 
 class Settings(BaseSettings):
@@ -23,26 +26,35 @@ class Settings(BaseSettings):
     APP_ENV: str = os.getenv("APP_ENV", os.getenv("ENVIRONMENT", "development"))
     HOST: str = os.getenv("HOST", "127.0.0.1")
     PORT: int = int(os.getenv("PORT", "8087"))
-    ALLOW_LAN: bool = os.getenv("ALLOW_LAN", "0") in ("1", "true", "True")
+    # Accepted truthy forms for ALLOW_LAN: "1", "true", "yes" (case-insensitive)
+    ALLOW_LAN: bool = os.getenv("ALLOW_LAN", "0").strip().lower() in ("1", "true", "yes")
 
     # Security & API Key Invariants
     REQUIRE_API_KEY: bool = os.getenv("REQUIRE_API_KEY", "false").lower() in ("true", "1", "yes")
     API_KEY: Optional[str] = os.getenv("API_KEY", None)
 
     # Fleet Service Endpoints (Air-Gapped Loopback Mesh)
-    BIZ_BASE_URL: str = os.getenv("BIZ_BASE_URL", "http://127.0.0.1:8086")
-    LAW_BASE_URL: str = os.getenv("LAW_BASE_URL", "http://127.0.0.1:8085")
+    BIZ_BASE_URL: str = os.getenv("BIZ_BASE_URL") or f"http://{os.getenv('HOST', '127.0.0.1')}:{int(os.getenv('BIZ_PORT', '8086'))}"
+    LAW_BASE_URL: str = os.getenv("LAW_BASE_URL") or f"http://{os.getenv('HOST', '127.0.0.1')}:{int(os.getenv('LAW_PORT', '8085'))}"
     CLIENT_TIMEOUT: float = float(os.getenv("CLIENT_TIMEOUT", "5.0"))
 
-    # CORS
-    CORS_ORIGINS: str = os.getenv(
-        "CORS_ORIGINS",
-        "http://localhost:8507,http://127.0.0.1:8507,http://localhost:3000,http://127.0.0.1:3000"
+    # CORS (comma-separated http:// or https:// origins)
+    CORS_ORIGINS: str = os.getenv("CORS_ORIGINS") or (
+        f"http://localhost:{int(os.getenv('UI_PORT', '8507'))},"
+        f"http://127.0.0.1:{int(os.getenv('UI_PORT', '8507'))}"
     )
 
     @property
     def cors_origins_list(self) -> list[str]:
-        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
+        origins = [o.strip() for o in (self.CORS_ORIGINS or "").split(",") if o.strip()]
+        if not origins:
+            raise ValueError("CORS_ORIGINS must contain at least one valid origin.")
+        for origin in origins:
+            if not (origin.startswith("http://") or origin.startswith("https://")):
+                raise ValueError(
+                    f"Invalid CORS origin '{origin}': must start with http:// or https://"
+                )
+        return origins
 
 
 def is_loopback_or_private_host(url_or_host: str) -> bool:
@@ -68,7 +80,8 @@ def is_loopback_or_private_host(url_or_host: str) -> bool:
             return True
         ip = ipaddress.ip_address(hostname)
         return ip.is_loopback or ip.is_private
-    except Exception:
+    except (ValueError, TypeError) as exc:
+        logger.debug("Invalid host or IP address '%s': %s", url_or_host, exc)
         return False
 
 
@@ -90,7 +103,8 @@ def is_strict_loopback(url_or_host: str) -> bool:
             return True
         ip = ipaddress.ip_address(hostname)
         return ip.is_loopback
-    except Exception:
+    except (ValueError, TypeError) as exc:
+        logger.warning("Invalid loopback host or IP address '%s': %s", url_or_host, exc)
         return False
 
 
@@ -103,6 +117,11 @@ def validate_security_invariants(s: Settings) -> None:
     """
     disallowed_keys = ("", "default", "changeme", "secret", "replace_me")
     env = (s.APP_ENV or s.ENVIRONMENT or "development").lower()
+
+    if not s.BIZ_BASE_URL or not s.BIZ_BASE_URL.strip():
+        raise RuntimeError("Security Violation: BIZ_BASE_URL must be configured.")
+    if not s.LAW_BASE_URL or not s.LAW_BASE_URL.strip():
+        raise RuntimeError("Security Violation: LAW_BASE_URL must be configured.")
 
     if env != "development" and (not s.API_KEY or not s.API_KEY.strip() or s.API_KEY.strip().lower() in disallowed_keys):
         raise RuntimeError(

@@ -29,3 +29,6 @@ ENV/
 .coverage
 htmlcov/
 .DS_Store
+.agent/
+*INFLIGHT*.md
+scratch/

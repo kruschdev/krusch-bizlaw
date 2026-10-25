@@ -66,3 +66,35 @@ def test_missing_as_of_date_rejected():
     res = client.post("/api/conflicts/contract-vs-statute", json=payload)
     assert res.status_code == 400
     assert "as_of_date" in res.json()["detail"]
+
+
+def test_client_health_check_mixin_logs_warning(caplog, monkeypatch):
+    import logging
+    import httpx
+    from src.backend.clients import KruschBizClient, KruschLawClient, _HealthCheckMixin
+
+    assert issubclass(KruschBizClient, _HealthCheckMixin)
+    assert issubclass(KruschLawClient, _HealthCheckMixin)
+
+    class _FailingClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def get(self, url):
+            raise httpx.ConnectError("connection refused")
+
+    monkeypatch.setattr(httpx, "Client", _FailingClient)
+    with caplog.at_level(logging.WARNING):
+        assert KruschBizClient(base_url="http://127.0.0.1:9999").check_health() is False
+        assert KruschLawClient(base_url="http://127.0.0.1:9998").check_health() is False
+
+    messages = [rec.message for rec in caplog.records]
+    assert any("Health check failed for KruschBiz" in m for m in messages)
+    assert any("Health check failed for KruschLaw" in m for m in messages)
+

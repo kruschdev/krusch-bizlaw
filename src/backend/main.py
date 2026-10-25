@@ -13,6 +13,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+import httpx
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -30,12 +31,39 @@ from .config import is_strict_loopback, settings, validate_security_invariants
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("kruschbizlaw.api")
 
+def _init_service_clients(app_instance: FastAPI) -> None:
+    """Safely initialize downstream KruschBiz and KruschLaw clients onto app.state (ARCH-01, BUG-01)."""
+    try:
+        app_instance.state.biz_client = KruschBizClient()
+    except (ValueError, httpx.HTTPError, RuntimeError, OSError) as exc:
+        logger.error("Failed to create biz client: %s", exc, exc_info=True)
+        app_instance.state.biz_client = None
+
+    try:
+        app_instance.state.law_client = KruschLawClient()
+    except (ValueError, httpx.HTTPError, RuntimeError, OSError) as exc:
+        logger.error("Failed to create law client: %s", exc, exc_info=True)
+        app_instance.state.law_client = None
+
+
+def _get_biz_client(request: Request) -> Optional[KruschBizClient]:
+    if request is None or not hasattr(request.app.state, "biz_client"):
+        raise RuntimeError("biz_client is not initialized on request.app.state")
+    return request.app.state.biz_client
+
+
+def _get_law_client(request: Request) -> Optional[KruschLawClient]:
+    if request is None or not hasattr(request.app.state, "law_client"):
+        raise RuntimeError("law_client is not initialized on request.app.state")
+    return request.app.state.law_client
+
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Lifecycle event enforcing security invariants and loopback residency on startup."""
+async def lifespan(app_instance: FastAPI):
+    """Lifecycle event enforcing security invariants, client initialization, and loopback residency on startup."""
     logger.info("Initializing KruschBizLaw Sovereign Statutory Compliance Platform...")
     validate_security_invariants(settings)
+    _init_service_clients(app_instance)
     loopback_ok = is_strict_loopback(settings.HOST)
     logger.info(
         f"KruschBizLaw listening on {settings.HOST}:{settings.PORT} "
@@ -51,6 +79,7 @@ app = FastAPI(
     description="Sovereign Cross-Domain Statutory Compliance Engine & Contract-vs-Statute Join Platform",
     lifespan=lifespan,
 )
+_init_service_clients(app)
 
 app.add_middleware(
     CORSMiddleware,
@@ -59,9 +88,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-biz_client = KruschBizClient()
-law_client = KruschLawClient()
 
 
 def verify_api_key(
@@ -82,10 +108,22 @@ def verify_api_key(
     return token
 
 
+def _safe_check_health(client: Any, name: str) -> Any:
+    if client is None:
+        return "unreachable"
+    try:
+        return client.check_health()
+    except (httpx.HTTPError, RuntimeError, ValueError, OSError):
+        logger.error("%s health check failed", name, exc_info=True)
+        return "unreachable"
+
+
 @app.get("/health")
 def health_check(request: Request) -> Dict[str, Any]:
     """Health & fleet node connectivity check."""
     client_host = request.client.host if request.client else "unknown"
+    active_biz = _get_biz_client(request)
+    active_law = _get_law_client(request)
     return {
         "status": "healthy",
         "service": "krusch-bizlaw",
@@ -95,8 +133,8 @@ def health_check(request: Request) -> Dict[str, Any]:
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "client_host": client_host,
         "fleet_connectivity": {
-            "krusch_biz": biz_client.check_health(),
-            "krusch_law": law_client.check_health(),
+            "krusch_biz": _safe_check_health(active_biz, "biz_client"),
+            "krusch_law": _safe_check_health(active_law, "law_client"),
         }
     }
 
@@ -113,6 +151,7 @@ def list_statutory_mandates() -> Dict[str, Any]:
 @app.post("/api/conflicts/contract-vs-statute", response_model=ContractVsStatuteResponse)
 def evaluate_compliance(
     req: ContractVsStatuteRequest,
+    request: Request,
     _auth: Optional[str] = Depends(verify_api_key)
 ) -> ContractVsStatuteResponse:
     """
@@ -134,6 +173,7 @@ def evaluate_compliance(
         )
 
     findings: List[ComplianceFinding] = []
+    active_biz = _get_biz_client(request)
 
     for topic in req.topics:
         # Check if direct slot override was supplied in request
@@ -141,8 +181,8 @@ def evaluate_compliance(
         clause_info = None
 
         # If connected to KruschBiz and counterparty specified, consult live DAG
-        if req.counterparty and not contract_slots:
-            clause = biz_client.get_controlling_clause(
+        if req.counterparty and not contract_slots and active_biz is not None:
+            clause = active_biz.get_controlling_clause(
                 counterparty=req.counterparty,
                 topic=topic,
                 as_of_date=req.as_of_date

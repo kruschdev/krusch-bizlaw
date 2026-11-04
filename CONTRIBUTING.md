@@ -2,7 +2,7 @@
 
 Welcome, and thank you for contributing to KruschBizLaw!
 
-KruschBizLaw is the sovereign cross-domain statutory compliance engine ("The Join") unifying commercial contract terms from KruschBiz and non-waivable statutory authorities from KruschLaw. All contributions must uphold our non-negotiable architectural invariants.
+KruschBizLaw is the sovereign cross-domain statutory compliance engine ("The Join") unifying commercial contract terms from KruschBiz and non-waivable statutory authorities from KruschLaw. All contributions must uphold the project's non-negotiable architectural invariants.
 
 ---
 

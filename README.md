@@ -116,6 +116,14 @@ KruschBizLaw is benchmarked against 11 real-world conflict pairs covering reside
 
 ## ⚡ Quickstart
 
+### Agent-Assisted Setup
+
+Ask your coding agent (Claude Code, Codex, Cursor, Windsurf, or Antigravity):
+
+```text
+Read https://raw.githubusercontent.com/kruschdev/krusch-bizlaw/main/INSTALL.md and set up krusch-bizlaw on this machine.
+```
+
 ### 1. Run 60-Second Headless Demo (<0.01s Execution)
 ```bash
 python3 scripts/demo_60s.py
